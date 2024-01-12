@@ -1,4 +1,58 @@
-# Main entrypoint of the workflow. 
-# Please follow the best practices: 
-# https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
-# in particular regarding the standardized folder structure mentioned there. 
+# load config file and genome
+configfile: "config/config.yaml"
+genome = config["genome"]
+
+# Import modules
+include: "scripts/general_functions.smk"
+import datetime
+from scripts.resources import Resources
+from snakemake.utils import min_version
+
+# set minimum snakemake version
+min_version("7.25.0")
+
+# load resources to be used in rules
+resources = Resources(config["genome"], config["ensembl_genome_build"])
+resources_spike_in = Resources(config["spike_in_genome"], config["spike_in_ensembl_genome_build"])
+
+# get wildcard values
+SAMPLES = samples()
+BW_INPUT_DIR = bw_input_dir(config)
+
+# import rules
+include: "rules/fastqc.smk"
+include: "rules/trimming.smk"
+include: "rules/resources.smk"
+include: "rules/mapping.smk"
+include: "rules/deduplication.smk"
+include: "rules/sequence_lengths.smk"
+include: "rules/scale_factors.smk"
+include: "rules/bigwig.smk"
+include: "rules/deeptools.smk"
+include: "rules/plotting.smk"
+
+rule all:
+    input: 
+        "results/plots/qc/mapping_rates.pdf",
+        "results/plots/qc/mapping_read_number.pdf",
+        expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+        "results/plots/qc/PCA.pdf",
+        "results/plots/qc/scree.pdf",
+        expand("results/sequence_lengths/{bw_input_dir}/{sample}.txt", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+
+# Set local rules
+localrules: all
+
+# save snakemake terminal output to log file
+time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+snake_log = f"logs/snakemake/{time}_snakemake.log"
+os.makedirs("logs/snakemake", exist_ok=True)
+
+onsuccess: 
+    shell("cp -v {log} {snake_log}")
+    print("Analysis finished successfully!")
+
+onerror:
+    shell("cp -v {log} {snake_log}")
+    print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
+

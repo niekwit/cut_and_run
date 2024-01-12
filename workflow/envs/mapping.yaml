@@ -1,0 +1,12 @@
+name: mapping
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bowtie2=2.5.2
+  - samtools=1.19
+  - pigz=2.8
+  - multiqc=1.19
+  - python=3.10
+  - pyfaidx=0.8.0
