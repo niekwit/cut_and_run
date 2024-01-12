@@ -31,7 +31,11 @@ factors <- unique(sample_info$factor)
 treatments <- unique(sample_info$treatment)
 
 # set colours (genotypes)
-colours <- brewer.pal(length(genotypes), "Dark2")
+if (length(genotypes) < 3) {
+  colours <- c("#1B9E77","#D95F02")
+} else {
+  colours <- brewer.pal(length(genotypes), "Dark2")
+}
 
 # set shapes (treatments)
 shapes <- c(21, 22, 24, 23, 25)[1:length(treatments)]
@@ -60,13 +64,13 @@ p <- ggplot(df,
                           fill = genotype, 
                           shape = treatment, 
                           size = factor)) +
+  geom_point() +
   geom_label_repel(data = df , 
                    aes(label = sample,
                        fill = NULL), 
                    size = 5, 
                    nudge_x = 0.5, 
                    nudge_y = 0.5) +
-  geom_point() +
   scale_fill_manual(values = colours) +
   scale_shape_manual(values = shapes) +
   scale_size_manual(values = sizes) +
@@ -84,7 +88,7 @@ ggsave(snakemake@output[["pca"]], p)
 #### Scree plot ####
 # scale factor for utilising whole second y-axis range
 # https://stackoverflow.com/questions/65559901/add-a-second-y-axis-to-ggplot
-scalefactor <- max(df$Eigenvalue) / 100
+scalefactor <- max(data$Eigenvalue) / 100
 
 # prepare data for scree plot
 df <- data %>%
