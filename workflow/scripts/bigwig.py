@@ -15,8 +15,6 @@ threads = snakemake.threads
 log = snakemake.log_fmt_shell(stdout=True, stderr=True)
 sample = snakemake.wildcards["sample"]
 
-print(type(norm))
-
 # Load scale factors for sample if spike in was applied
 if snakemake.params["apply_spike_in"]:
     scale_factors = snakemake.input["sf"]
