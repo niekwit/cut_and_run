@@ -25,7 +25,6 @@ include: "rules/trimming.smk"
 include: "rules/resources.smk"
 include: "rules/mapping.smk"
 include: "rules/deduplication.smk"
-include: "rules/sequence_lengths.smk"
 include: "rules/scale_factors.smk"
 include: "rules/bigwig.smk"
 include: "rules/deeptools.smk"
@@ -35,10 +34,11 @@ rule all:
     input: 
         "results/plots/qc/mapping_rates.pdf",
         "results/plots/qc/mapping_read_number.pdf",
-        expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+        #expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
         "results/plots/qc/PCA.pdf",
         "results/plots/qc/scree.pdf",
-        expand("results/sequence_lengths/{bw_input_dir}/{sample}.txt", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+        "results/plots/qc/fragment_lengths.pdf",
+        "results/qc/fragment_lengths.tsv"
 
 # Set local rules
 localrules: all
