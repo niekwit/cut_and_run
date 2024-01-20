@@ -1,7 +1,3 @@
-# load config file and genome
-configfile: "config/config.yaml"
-genome = config["genome"]
-
 # Import modules
 include: "scripts/general_functions.smk"
 import datetime
@@ -11,13 +7,28 @@ from snakemake.utils import min_version
 # set minimum snakemake version
 min_version("7.25.0")
 
+# load config file and genome
+configfile: "config/config.yaml"
+
+# Check config parameters for invalid values
+check_config()
+
+# load genome
+genome = config["genome"]
+
 # load resources to be used in rules
-resources = Resources(config["genome"], config["ensembl_genome_build"])
+resources = Resources(genome, config["ensembl_genome_build"])
 resources_spike_in = Resources(config["spike_in_genome"], config["spike_in_ensembl_genome_build"])
+
+# Load sample information
+csv = pd.read_csv("config/samples.csv")
 
 # get wildcard values
 SAMPLES = samples()
-BW_INPUT_DIR = bw_input_dir(config)
+BW_INPUT_DIR = bw_input_dir()
+CONDITIONS = conditions()
+IP_SAMPLES = ip_samples()
+CONTROL_SAMPLES = ip_samples("input") # can be either input or IgG control
 
 # import rules
 include: "rules/fastqc.smk"
@@ -29,16 +40,12 @@ include: "rules/scale_factors.smk"
 include: "rules/bigwig.smk"
 include: "rules/deeptools.smk"
 include: "rules/plotting.smk"
+include: "rules/peaks.smk"
 
+# Set target rule
 rule all:
     input: 
-        "results/plots/qc/mapping_rates.pdf",
-        "results/plots/qc/mapping_read_number.pdf",
-        #expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
-        "results/plots/qc/PCA.pdf",
-        "results/plots/qc/scree.pdf",
-        "results/plots/qc/fragment_lengths.pdf",
-        "results/qc/fragment_lengths.tsv"
+        targets()
 
 # Set local rules
 localrules: all
