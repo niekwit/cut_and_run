@@ -94,7 +94,7 @@ if config["apply_spike_in"]:
                 ".rev.2.bt2",
             ),
         log:
-            "logs/bowtie2_build/build.log",
+            "logs/bowtie2_build_spike_in/build.log",
         params:
             extra="",  # optional parameters
         threads: config["resources"]["index"]["cpu"]
@@ -153,7 +153,7 @@ rule bam_sort:
     output:
         "results/mapped/sorted/{sample}.bam",
     params:
-        extra="",  # optional params string
+        extra="-m 4G",  # optional params string
     threads: config["resources"]["samtools"]["cpu"]
     resources:
         runtime=config["resources"]["samtools"]["time"],
