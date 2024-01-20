@@ -51,4 +51,54 @@ rule plot_PCA:
         "../scripts/plot_PCA.R"
 
 
+rule plot_heatmap:
+    input:
+        mat="results/deeptools/matrix.gz",
+    output:
+        pdf="results/plots/heatmap.pdf",
+        mat="results/deeptools/heatmap_matrix.gz",
+    params:
+        im = config["deeptools"]["plotHeatmap"]["interpolationMethod"],
+        pt = config["deeptools"]["plotHeatmap"]["plotType"],
+        cm = config["deeptools"]["plotHeatmap"]["colorMap"],
+        a = config["deeptools"]["plotHeatmap"]["alpha"],
+        extra="",
+    threads: config["resources"]["deeptools"]["cpu"]
+    resources:
+        runtime=config["resources"]["deeptools"]["time"]
+    log:
+        "logs/deeptools/plotHeatmap.log"
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "plotHeatmap "
+        "--matrixFile {input.mat} "
+        "--outFileNameMatrix {output.mat} "
+        "--outFileName {output.pdf} "
+        "--perGroup "
+        "--colorMap {params.cm} "
+        "--alpha {params.a} "
+        "{params.extra} "
+        "> {log} 2>&1"
 
+
+if config["peak_calling"]["htseq_count"]["use_htseq_count"]:
+    rule plot_peaks_volcano:
+        input:
+            xlsx="results/peaks/DESeq2/{bw_input_dir}/differential_peaks.xlsx",
+            dir="results/peaks/DESeq2/{bw_input_dir}/",
+        output:
+            directory("results/plots/differential_peaks/volcano_plots"),
+        params:
+            fdr=config["peak_calling"]["htseq_count"]["DESeq2"]["alpha"],
+            fc=config["peak_calling"]["htseq_count"]["DESeq2"]["fc"],
+            extra="",
+        threads: config["resources"]["plotting"]["cpu"]
+        resources:
+            runtime=config["resources"]["plotting"]["time"]
+        log:
+            "logs/plots/volcano_peaks.log"
+        conda:
+            "../envs/R.yaml"
+        script:
+            "../scripts/plot_peaks_volcano.R"
