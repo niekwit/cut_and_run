@@ -97,6 +97,7 @@ shell(
     "--normalizeUsing {norm} "
     "--extendReads "
     "--outFileName {output} "
+    "{extra} "
     "{log} "
 )
 
