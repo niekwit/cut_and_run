@@ -27,7 +27,7 @@ if config["remove_MT_seqs"]:
         params:
             extra="",  # optional params string
         wrapper:
-            "v3.3.3/bio/samtools/faidx"
+            "v3.3.6/bio/samtools/faidx"
     
     
     rule remove_MT_seq_from_fasta:
@@ -72,7 +72,7 @@ if config["remove_MT_seqs"]:
             "faidx --transform bed {input} > {output} 2> {log}"
     '''
 
-if config["apply_spike_in"]:
+if config["spike-in"]["apply_spike_in"]:
     use rule get_fasta as get_spike_in_fasta with:
         output:
             resources_spike_in.fasta,
