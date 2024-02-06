@@ -50,7 +50,7 @@ def check_config():
     # Check boolean values
     check = {
         "deduplication": config["deduplication"],
-        "apply_spike_in": config["apply_spike_in"],
+        "apply_spike_in": config["spike-in"]["apply_spike_in"],
         "remove_MT_seqs": config["remove_MT_seqs"],
     }
     for key, value in check.items():
@@ -157,8 +157,6 @@ def ip_samples(type="ip_samples"):
         else:
             # Printing these warning leads to an error when using dot to create DAG/rule graph
             # Solution: https://github.com/snakemake/snakemake/issues/135
-            #print("WARNING: No input or IgG samples found in csv file...")
-            #print("Peak calling will continue without control samples")
             sys.stderr.write("WARNING: No input or IgG samples applied as controls in config.peak_calling...\n")
             sys.stderr.write("Peak calling will continue without control samples\n")
             return []
@@ -182,7 +180,7 @@ def bw_input_data(wildcards):
         "multiqc": "results/qc/multiqc_data/multiqc_general_stats.txt",
     }
     # Add additional input files depending on config file
-    if config["apply_spike_in"]:
+    if config["spike-in"]["apply_spike_in"]:
         dict["sf"] = "results/scale_factors/scale_factors.csv"
     if config["remove_MT_seqs"]:
         dict["mgs"] = f"resources/{genome}_mt_genome_size.txt"
@@ -227,67 +225,74 @@ def computematrix_args():
     return args
 
 
-def macs2_input(wildcards, rule="call_peaks_macs2"):
-    """Returns named input files as dictionary for call_peaks_macs2 rule.
-    """
-    if rule == "call_peaks_macs2":
-        # Base input
-        dict = {
-            "ip_bam": "results/mapped/{bw_input_dir}/{ip_sample}.bam".format(wildcards=wildcards),
-            "bai": "results/mapped/{bw_input_dir}/{ip_sample}.bam.bai".format(wildcards=wildcards),
-        }
-        
-        if config["peak_calling"]["macs2"]["input_available"] or config["peak_calling"]["macs2"]["IgG_available"]:
-            dict["input_bam"] = "results/mapped/{bw_input_dir}/{input_sample}.bam".format(wildcards=wildcards)
-            dict["input_bai"] = "results/mapped/{bw_input_dir}/{input_sample}.bam.bai".format(wildcards=wildcards)
-        
-        
-    elif rule == "diffbind":
-        # Base input
-        dict = {
-            "ip_bam": expand("results/mapped/{bw_input_dir}/{ip_sample}.bam".format(wildcards=wildcards)),
-            "bai": expand("results/mapped/{bw_input_dir}/{ip_sample}.bam.bai".format(wildcards=wildcards)),
-        }
-        
-        if config["peak_calling"]["macs2"]["input_available"] or config["peak_calling"]["macs2"]["IgG_available"]:
-            dict["input_bam"] = expand("results/mapped/{bw_input_dir}/{input_sample}.bam".format(wildcards=wildcards))
-            dict["input_bai"] = expand("results/mapped/{bw_input_dir}/{input_sample}.bam.bai".format(wildcards=wildcards))
-
-    return dict
-
-
-def macs2_output(wilcards, rule="call_peaks_macs2"):
-    """Returns named output files as dictionary for call_peaks_macs2 rule.
+def macs2_mode():
+    """Returns macs2 peak calling mode as string based on config file
     """
     broad = config["peak_calling"]["macs2"]["broad"]
     if not isinstance(broad, bool):
         raise ValueError(f"ERROR: config.peak_calling.macs2.broad must be True or False")
     
     if broad:
-        mode = "broad"
+        return "broad"
     else:
-        mode = "narrow"
+        return "narrow"
+
+
+def macs2_input(wildcards):
+    """Returns named input files as dictionary for call_peaks_macs2 rule.
+    """
+    # Base input
+    dict = {
+        "ip_bam": "results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards),
+        "bai": "results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
+    }
     
-    if rule == "call_peaks_macs2":
-        dict = {
-            "xls": "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.xls".format(wildcards=wildcards),
-            "peak": "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.{mode}Peak".format(wildcards=wildcards, mode=mode),
-        }
+    if config["peak_calling"]["macs2"]["input_available"] or config["peak_calling"]["macs2"]["IgG_available"]:
+        dict["input_bam"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam".format(wildcards=wildcards)
+        dict["input_bai"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam.bai".format(wildcards=wildcards)
+
+    return dict
+
+
+def macs2_output(wilcards):
+    """Returns named output files as dictionary for call_peaks_macs2 rule.
+    """
+    mode = macs2_mode()
         
-        if broad:
-            dict["gapped"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
-        else:
-            dict["summits"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
-    elif rule == "diffbind":
-        dict = {
+    dict = {
+        "xls": "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.xls".format(wildcards=wildcards),
+        "peak": "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.{mode}Peak".format(wildcards=wildcards, mode=mode),
+    }
+
+    if mode == "broad":
+        dict["gapped"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
+    else: # narrow peak output
+        dict["summits"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
+
+    return dict
+
+
+def diffbind_input(wildcards):
+    """Returns named input files as dictionary for diffbind rule.
+    """
+    mode = macs2_mode()
+
+    # Base input
+    dict = {
+            "ip_bam": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
+            "bai": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards)),
             "xls": expand("results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.xls".format(wildcards=wildcards)),
             "peak": expand("results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.{mode}Peak".format(wildcards=wildcards, mode=mode)),
         }
         
-        if broad:
-            dict["gapped"] = expand("results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards))
-        else:
-            dict["summits"] = expand("results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards))
+    if config["peak_calling"]["macs2"]["input_available"] or config["peak_calling"]["macs2"]["IgG_available"]:
+        dict["input_bam"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam".format(wildcards=wildcards))
+        dict["input_bai"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam.bai".format(wildcards=wildcards))
+
+    if mode == "broad":
+        dict["gapped"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
+    else: # narrow peak output
+        dict["summits"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
+
 
     return dict
-    
