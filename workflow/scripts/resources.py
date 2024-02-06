@@ -41,6 +41,18 @@ class Resources:
             self.mt_fasta_url = f"{base_url}fasta/mus_musculus/dna/Mus_musculus.{name}.dna.chromosome.MT.fa.gz"
             self.gtf_url = f"{base_url}gtf/mus_musculus/Mus_musculus.{name}.{build}.gtf.gz"
         
+        elif "dm" in genome:
+            if genome == "dm6":
+                name = "BDGP6.46"
+
+            self.fasta_url = f"{base_url}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.toplevel.fa.gz"
+            self.mt_fasta_url = f"{base_url}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.MT.fa.gz"
+            self.gtf_url = f"{base_url}gtf/drosophila_melanogaster/Drosophila_melanogaster.{name}.{build}.gtf.gz" 
+        
+        # downloaded unzipped file names
+        #self.fasta = self._file_from_url(self.fasta_url)
+        #self.gtf = self._file_from_url(self.gtf_url)
+        
         elif genome == "MG1655":
             # Spike-in genome
             self.fasta_url = f"https://ftp.ensemblgenomes.ebi.ac.uk/pub/bacteria/release-{build}/fasta/bacteria_0_collection/escherichia_coli_str_k_12_substr_mg1655_gca_000005845/dna/Escherichia_coli_str_k_12_substr_mg1655_gca_000005845.ASM584v2.dna.toplevel.fa.gz"
