@@ -19,7 +19,7 @@ rule bowtie2_build:
     resources:
         runtime=config["resources"]["index"]["time"],
     wrapper:
-        "v3.3.3/bio/bowtie2/build"
+        "v3.3.6/bio/bowtie2/build"
 
 
 rule bowtie2_align:
@@ -79,7 +79,7 @@ rule bowtie2_align:
         "-bhS > {output} "
 
 
-if config["apply_spike_in"]:
+if config["spike-in"]["apply_spike_in"]:
     rule bowtie2_build_spike_in:
         input:
             ref=resources_spike_in.fasta
@@ -101,7 +101,7 @@ if config["apply_spike_in"]:
         resources:
             runtime=config["resources"]["index"]["time"],
         wrapper:
-            "v3.3.3/bio/bowtie2/build"
+            "v3.3.6/bio/bowtie2/build"
 
 
     rule bowtie2_align_spike_in:
@@ -160,7 +160,7 @@ rule bam_sort:
     log:
         "logs/bam_sort/{sample}.log",
     wrapper:
-        "v3.3.3/bio/samtools/sort"
+        "v3.3.6/bio/samtools/sort"
 
 
 rule remove_blacklisted_regions:
@@ -177,7 +177,7 @@ rule remove_blacklisted_regions:
     log:
         "logs/bedtools_bl/{sample}.log",
     wrapper:
-        "v3.3.3/bio/bedtools/intersect"
+        "v3.3.6/bio/bedtools/intersect"
 
 
 rule bam_index:
@@ -193,6 +193,6 @@ rule bam_index:
     log:
         "logs/samtools_index/{sample}.log",
     wrapper:
-        "v3.3.3/bio/samtools/index"
+        "v3.3.6/bio/samtools/index"
 
 
