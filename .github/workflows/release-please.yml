@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - uses: GoogleCloudPlatform/release-please-action@v2
+      - uses: GoogleCloudPlatform/release-please-action@v3
         id: release
         with:
-          release-type: go # just keep a changelog, no version anywhere outside of git tags
-          package-name: cut_and_run
+          release-type: simple # just keep a changelog, no version anywhere outside of git tags
+          token: ${{ secrets.GITHUB_TOKEN }}
