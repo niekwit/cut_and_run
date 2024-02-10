@@ -24,6 +24,9 @@ if config["remove_MT_seqs"]:
             index=f"{resources.fasta}.fai",
         log:
             "logs/resources/index_fasta.log"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources: 
+            runtime=config["resources"]["samtools"]["time"]
         params:
             extra="",  # optional params string
         wrapper:
@@ -36,13 +39,18 @@ if config["remove_MT_seqs"]:
             fai=f"{resources.fasta}.fai",
         output:
             fasta=resources.nomt_fasta,
+        params:
+            mt=mitochondrial_genome_name(),
         log:
             "logs/resources/remove_MT_seq_from_fasta.log"
+        threads: 1
+        resources: 
+            runtime=15
         conda:
             "../envs/mapping.yaml"
         shell:
             "awk '{{print $1}}' {input.fai} | " # Print field with chromosome name
-            "grep -v 'MT' | " # remove MT genome
+            "grep -v '{params.mt}' | " # remove MT genome
             "xargs samtools faidx {input.fasta} > {output}"  # create fasta without MT sequence
 
 
@@ -51,12 +59,17 @@ if config["remove_MT_seqs"]:
             fai=f"{resources.fasta}.fai",
         output:
             size=f"resources/{genome}_mt_genome_size.txt",
+        params:
+            mt=mitochondrial_genome_name(),
+        threads: 1
+        resources: 
+            runtime=10
         log:
             "logs/resources/MT_genome_size.log"
         conda:
             "../envs/mapping.yaml"
         shell:
-            "grep '^MT' {input} | awk '{{print $2}}' > {output} 2> {log} "
+            "grep '^{params.mt}' {input} | awk '{{print $2}}' > {output} 2> {log} "
 
     '''
     rule convert_mt_fasta_to_bed:
@@ -98,6 +111,47 @@ use rule get_fasta as get_black_list with:
             url=resources.blacklist_url,
         log:
             "logs/resources/get_black_list.log"
+
+
+rule convert2ensembl:
+    input:
+        resources.blacklist,
+    output:
+        resources.ensembl_blacklist,
+    threads: 1
+    resources: 
+        runtime=10
+    conda:
+        "../envs/mapping.yaml"
+    log:
+        "logs/resources/convert_blacklist2ensembl.log"
+    shell:
+        "sed 's/^chr//' {input} > {output} 2> {log}"
+
+
+rule bowtie2_build:
+    input:
+        ref=fasta(config, resources),
+    output:
+        multiext(
+            f"resources/bowtie2_index/{genome}/index",
+            ".1.bt2",
+            ".2.bt2",
+            ".3.bt2",
+            ".4.bt2",
+            ".rev.1.bt2",
+            ".rev.2.bt2",
+        ),
+    cache: True
+    log:
+        "logs/bowtie2_build_genome/build.log",
+    params:
+        extra="",  # optional parameters
+    threads: config["resources"]["index"]["cpu"]
+    resources:
+        runtime=config["resources"]["index"]["time"],
+    wrapper:
+        "v3.3.6/bio/bowtie2/build"
 
 
 rule compress_resources:
