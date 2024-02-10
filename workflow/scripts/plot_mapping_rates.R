@@ -1,5 +1,5 @@
 # redirect R output to log
-slog <- file(snakemake@log[[1]], open="wt")
+slog <- file(snakemake@log[[1]], open = "wt")
 sink(slog, type = "output")
 sink(slog, type = "message")
 
@@ -10,7 +10,7 @@ library(reshape2)
 
 # Get log files
 log.files <- unlist(snakemake@input["log"])
-#print(log.files)
+
 # Create empty data frames to store values
 df.perc <- data.frame(sample = character(),
                       overall_alignment_rate = numeric(),
@@ -28,7 +28,7 @@ df.number <- data.frame(sample = character(),
 for (i in seq_along(log.files)) {
   # Read in log file
   log <- readLines(log.files[[i]])
-  
+
   # Get sample name
   sample <- str_replace(basename(log.files[[i]]), ".log", "")
 
@@ -36,7 +36,7 @@ for (i in seq_along(log.files)) {
   total_reads <- as.numeric(str_replace(log[grep(" reads; of these:", log)],
                                         " reads; of these:",
                                         ""))
-  
+
   # Get overall alignment rate
   overall_alignment_rate <- as.numeric(str_replace(log[grep("% overall alignment rate", log)], 
                                                    "% overall alignment rate",
@@ -85,12 +85,10 @@ for (i in seq_along(log.files)) {
 df.perc <- melt(df.perc, id.vars = "sample")
 df.number <- melt(df.number, id.vars = "sample")
 
-title <- "Concordant alignment rates (Bowtie2)"
-
 # Plot and save alignment data
 plot_data <- function(df, title, y.axis, outfile){
   dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
-  
+
   p <- ggplot(df, aes(x = sample, y = value, fill = variable)) +
     geom_bar(stat = "identity",
              position = "dodge",
@@ -105,7 +103,9 @@ plot_data <- function(df, title, y.axis, outfile){
          x = NULL,
          y = y.axis, #"Number of reads aligned",
          fill = NULL) +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.1)),
+                       limits = c(0, 100)) +
+    scale_x_discrete(guide = guide_axis(angle = 45)) +
     scale_fill_manual(values = c("darkblue",
                                  "grey40",
                                  "forestgreen",
@@ -116,7 +116,7 @@ plot_data <- function(df, title, y.axis, outfile){
                                  "Did not align"))
   
   # Save to file
-  ggsave(outfile, p)
+  ggsave(outfile, p, height = 5, width = length(log.files) * 2)
 }
 
 plot_data(df.perc, "Concordant alignment rates (Bowtie2)", "Percentage of total reads", snakemake@output["rates"][[1]])
