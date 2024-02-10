@@ -1,7 +1,7 @@
 # Snakemake workflow: `cut_and_run`
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥6.3.0-brightgreen.svg)](https://snakemake.github.io)
-[![GitHub actions status](https://github.com/<owner>/<repo>/workflows/Tests/badge.svg?branch=main)](https://github.com/niekwit/cut_and_run/actions?query=branch%3Amain+workflow%3ATests)
+[![Tests](https://github.com/niekwit/cut_and_run/actions/workflows/main.yml/badge.svg)](https://github.com/niekwit/cut_and_run/actions/workflows/main.yml)
 
 
 A Snakemake workflow for `Cut & Run seq`
