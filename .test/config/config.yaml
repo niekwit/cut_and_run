@@ -34,8 +34,8 @@ deeptools:
     downstream: 3000
     binSize: 10
     averageTypeBins: mean # # mean, median, max, min, sum, region_length
-    regionsFileName: "" # BED or GTF file(s) with regions of interest (optional, whole genome if not specified)
-    no_whole_genome: False # If True, will omit whole genome as region and only use regionsFileName(s)
+    regionsFileName: "resources/Drosophila_melanogaster.BDGP6.46.111.chr4.gtf" # BED or GTF file(s) with regions of interest (optional, whole genome if not specified)
+    no_whole_genome: True # If True, will omit whole genome as region and only use regionsFileName(s)
     extra: "" # Any additional parameters for computeMatrix
   plotHeatmap:
     interpolationMethod: auto
