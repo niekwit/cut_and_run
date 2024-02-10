@@ -13,6 +13,7 @@ cutadapt:
   extra: "-q 20 " # Quality score cutoff
   min_length: 30
 remove_MT_seqs: True # Create bowtie2 index without MT sequences
+remove_blacklisted_regions: True # Remove blacklisted regions from the genome
 bowtie2:
   min_length: 10 # The minimum fragment length for valid paired-end alignments
   max_length: 700 # The maximum fragment length for valid paired-end alignments
@@ -32,23 +33,23 @@ deeptools:
     upstream: 3000
     downstream: 3000
     binSize: 10
-    averageTypeBins: std
+    averageTypeBins: mean # # mean, median, max, min, sum, region_length
     regionsFileName: "" # BED or GTF file(s) with regions of interest (optional, whole genome if not specified)
     no_whole_genome: False # If True, will omit whole genome as region and only use regionsFileName(s)
     extra: "" # Any additional parameters for computeMatrix
   plotHeatmap:
     interpolationMethod: auto
-    plotType: std # lines, fill, se, std
+    plotType: lines # lines, fill, se, std
     colorMap: viridis # https://matplotlib.org/2.0.2/users/colormaps.html
     alpha: 1.0
     extra: "" 
 peak_calling:
-  input_available: False
-  IgG_available: False
+  control_available: False
   macs2: # use MACS2 for peak calling and DiffBind for differential analysis
     use_macs2: False
     broad: False
     qvalue: 0.05
+    broad_cutoff: 0.1
     extra: ""
   htseq_count: # use HTSeq-count to count reads in gene regions and DESeq2 for differential analysis
     use_htseq_count: True
