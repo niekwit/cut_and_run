@@ -1,4 +1,3 @@
-# Import modules
 include: "scripts/general_functions.smk"
 import datetime
 from scripts.resources import Resources
@@ -17,8 +16,10 @@ check_config()
 genome = config["genome"]
 
 # load resources to be used in rules
-resources = Resources(genome, config["ensembl_genome_build"])
-resources_spike_in = Resources(config["spike_in_genome"], config["spike_in_ensembl_genome_build"])
+resources = Resources(genome, 
+                      config["ensembl_genome_build"])
+resources_spike_in = Resources(config["spike-in"]["genome"], 
+                               config["spike-in"]["ensembl_genome_build"])
 
 # Load sample information
 csv = pd.read_csv("config/samples.csv")
@@ -27,8 +28,7 @@ csv = pd.read_csv("config/samples.csv")
 SAMPLES = samples()
 BW_INPUT_DIR = bw_input_dir()
 CONDITIONS = conditions()
-IP_SAMPLES = ip_samples()
-CONTROL_SAMPLES = ip_samples("input") # can be either input or IgG control
+IP_SAMPLES, CONTROL_SAMPLES = ip_samples()
 
 # import rules
 include: "rules/fastqc.smk"
