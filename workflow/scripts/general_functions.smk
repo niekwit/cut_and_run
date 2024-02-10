@@ -4,7 +4,8 @@ import re
 import sys
 
 def targets():
-    """Returns file targets for rule all
+    """
+    Returns file targets for rule all
     """
     # Base targets
     TARGETS = [
@@ -21,16 +22,17 @@ def targets():
     ### Add conditional targets
     # Peak calling: #change to diffbind/chipseeker output later
     if config["peak_calling"]["macs2"]["use_macs2"]:
-        TARGETS.append("results/peaks/macs2/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls")
         if config["peak_calling"]["macs2"]["broad"]:
             TARGETS.extend([
-                expand("results/peaks/macs2/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.broadPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
-                expand("results/peaks/macs2/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.gappedPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.broadPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.gappedPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
             ]) 
         else:
             TARGETS.extend([
-                expand("results/peaks/macs2/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.narrowPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
-                expand("results/peaks/macs2/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks_summits.bed", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.narrowPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_summits.bed", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
             ]) 
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend([
@@ -42,7 +44,8 @@ def targets():
 
 
 def check_config():
-    """Checks if config file values are valid entries
+    """
+    Checks if config file values are valid entries
     """
     # List to store parameters with wrong value
     wrong = []
@@ -76,9 +79,15 @@ def check_config():
 
 
 def samples():
-    """Checks sample names/files and returns sample wildcard values for Snakemake
     """
-    SAMPLES = csv["sample"]
+    Checks sample names/files and returns sample wildcard values for Snakemake
+    """
+    SAMPLES = csv["sample"].tolist() # this gets just IP samples
+    try:
+        SAMPLES.extend(list(set(csv["control"]))) # this adds control samples
+    except KeyError:
+        # No control samples
+        pass
     
     # Check if sample names contain any characters that are not alphanumeric or underscore
     illegal = []
@@ -87,7 +96,7 @@ def samples():
             illegal.append(sample)
     if len(illegal) != 0:
         illegal = "\n".join(illegal)
-        raise ValueError(f"ERROR: following samples contain illegal characters:\n{illegal}")
+        raise ValueError(f"Following samples contain illegal characters:\n{illegal}")
 
     # Check if each sample name ends with _[0-9]
     wrong = []
@@ -96,7 +105,7 @@ def samples():
             wrong.append(sample)
     if len(wrong) != 0:
         wrong = "\n".join(wrong)
-        raise ValueError(f"ERROR: following samples do not end with _[0-9]:\n{wrong}")
+        raise ValueError(f"Following samples do not end with _[0-9]:\n{wrong}")
 
     # check if sample names match file names
     not_found = []
@@ -109,13 +118,14 @@ def samples():
             not_found.append(r2)
     if len(not_found) != 0:
         not_found = "\n".join(not_found)
-        raise ValueError(f"ERROR: following files not found:\n{not_found}")
+        raise ValueError(f"Following files not found:\n{not_found}")
 
     return SAMPLES         
 
 
 def conditions():
-    """Returns condition wildcard values for Snakemake
+    """
+    Returns condition wildcard values for Snakemake
     """
     # Get unique conditions for average bw file names
     conditions = list(set([re.sub("_[\d]$","",x) for x in SAMPLES]))
@@ -123,7 +133,8 @@ def conditions():
 
 
 def cutadapt_args(config, param):
-    """Returns cutadapt adapter or extra arguments as string read from config file
+    """
+    Returns cutadapt adapter or extra arguments as string read from config file
     """
     if param == "adapters":
         a_arg = config["cutadapt"]["a"]
@@ -134,7 +145,8 @@ def cutadapt_args(config, param):
 
 
 def bw_input_dir():
-    """Input function for bigwig rule.
+    """
+    Input function for bigwig rule.
     Determines which bam files to use for bigwig generation: deduplicated or not.
     """
     if config["deduplication"]:
@@ -142,24 +154,44 @@ def bw_input_dir():
     else:
         return ["bl_removed"]
     
+    '''
+    if config["deduplication"]:
+        return ["deduplicated"]
+    elif config["remove_blacklisted_regions"]:
+        return ["bl_removed"]
+    else:
+        return ["sorted"]
+    '''
 
-def ip_samples(type="ip_samples"):
-    """Returns list of IP/input samples for peak calling
+
+def dedup_input_dir():
     """
-    if type == "ip_samples":
-        # Select all lines in csv (df) that are not input/IgG samples in factor column
-        return csv[~csv["factor"].str.lower().isin(["input","igg"])]["sample"].tolist()
-    elif type == "input":
-        if config["peak_calling"]["input_available"]:
-            return csv[csv["factor"].str.lower() == "input"]["sample"].tolist()
-        elif config["peak_calling"]["IgG_available"]:
-            return csv[csv["factor"].str.lower() == "igg"]["sample"].tolist()
+    Returns input dir for deduplication rule
+    """
+    if config["remove_blacklisted_regions"]:
+        return ["bl_removed"]
+    else:
+        return ["sorted"]
+
+
+def ip_samples():
+    """Returns lists of paired IP/control samples for peak calling
+    """
+    if config["peak_calling"]["macs2"]["use_macs2"] or config["peak_calling"]["htseq_count"]["use_htseq_count"]:
+        ip_samples = csv["sample"].tolist()
+        
+        if config["peak_calling"]["control_available"]:
+            input_samples = csv["control"].tolist()
         else:
-            # Printing these warning leads to an error when using dot to create DAG/rule graph
-            # Solution: https://github.com/snakemake/snakemake/issues/135
-            sys.stderr.write("WARNING: No input or IgG samples applied as controls in config.peak_calling...\n")
+            input_samples = []
+            sys.stderr.write("WARNING: No input/IgG/control samples applied for peak calling...\n")
             sys.stderr.write("Peak calling will continue without control samples\n")
-            return []
+    else:
+        ip_samples = []
+        input_samples = []
+        sys.stderr.write("WARNING: Skipping peak calling (no peak calling method selected)...\n")
+    
+    return ip_samples, input_samples
 
 
 def fasta(config, resources):
@@ -169,8 +201,9 @@ def fasta(config, resources):
         return resources.fasta
 
 
-def bw_input_data(wildcards):
-    """Returns named input files as dictionary for bigwig rule.
+def bw_input(wildcards):
+    """
+    Returns named input files as dictionary for bigwig rule.
     Bigwig rule input can change depdending whether spike-in normalization is applied or not and mitochondrial sequences are omited from the analysis.
     """
     # Create base input dictionary (these input files are always required)
@@ -178,6 +211,7 @@ def bw_input_data(wildcards):
         "bam": "results/mapped/{wildcards.bw_input_dir}/{wildcards.sample}.bam".format(wildcards=wildcards),
         "bai": "results/mapped/{wildcards.bw_input_dir}/{wildcards.sample}.bam.bai".format(wildcards=wildcards),
         "multiqc": "results/qc/multiqc_data/multiqc_general_stats.txt",
+        "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
     # Add additional input files depending on config file
     if config["spike-in"]["apply_spike_in"]:
@@ -189,7 +223,8 @@ def bw_input_data(wildcards):
 
 
 def computematrix_args():
-    """Returns computeMatrix arguments as string based on config file
+    """
+    Returns computeMatrix arguments as string based on config file
     """
     # Add mode argument
     mode = config["deeptools"]["matrix"]["mode"]
@@ -226,7 +261,8 @@ def computematrix_args():
 
 
 def macs2_mode():
-    """Returns macs2 peak calling mode as string based on config file
+    """
+    Returns macs2 peak calling mode as string based on config file
     """
     broad = config["peak_calling"]["macs2"]["broad"]
     if not isinstance(broad, bool):
@@ -239,23 +275,26 @@ def macs2_mode():
 
 
 def macs2_input(wildcards):
-    """Returns named input files as dictionary for call_peaks_macs2 rule.
+    """
+    Returns named input files as dictionary for call_peaks_macs2 rule.
     """
     # Base input
     dict = {
         "ip_bam": "results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards),
         "bai": "results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
+        "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
-    
-    if config["peak_calling"]["macs2"]["input_available"] or config["peak_calling"]["macs2"]["IgG_available"]:
-        dict["input_bam"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam".format(wildcards=wildcards)
-        dict["input_bai"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam.bai".format(wildcards=wildcards)
+    # Add control sample if available
+    if config["peak_calling"]["control_available"]:
+        dict["control_bam"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam".format(wildcards=wildcards)
+        dict["control_bai"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards)
 
     return dict
 
-
-def macs2_output(wilcards):
-    """Returns named output files as dictionary for call_peaks_macs2 rule.
+'''
+def macs2_output(wilcards): #REMOVE LATER
+    """
+    Returns named output files as dictionary for call_peaks_macs2 rule.
     """
     mode = macs2_mode()
         
@@ -270,10 +309,11 @@ def macs2_output(wilcards):
         dict["summits"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
 
     return dict
-
+'''
 
 def diffbind_input(wildcards):
-    """Returns named input files as dictionary for diffbind rule.
+    """
+    Returns named input files as dictionary for diffbind rule.
     """
     mode = macs2_mode()
 
@@ -281,18 +321,42 @@ def diffbind_input(wildcards):
     dict = {
             "ip_bam": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
             "bai": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards)),
-            "xls": expand("results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.xls".format(wildcards=wildcards)),
-            "peak": expand("results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.{mode}Peak".format(wildcards=wildcards, mode=mode)),
+            "xls": expand("results/peaks/{mode}/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.xls".format(wildcards=wildcards)),
+            "peak": expand("results/peaks/{mode}/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.{mode}Peak".format(wildcards=wildcards, mode=mode)),
         }
         
-    if config["peak_calling"]["macs2"]["input_available"] or config["peak_calling"]["macs2"]["IgG_available"]:
-        dict["input_bam"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam".format(wildcards=wildcards))
-        dict["input_bai"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.input_sample}.bam.bai".format(wildcards=wildcards))
+    if config["peak_calling"]["control_available"]:
+        dict["input_bam"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam".format(wildcards=wildcards))
+        dict["input_bai"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
 
     if mode == "broad":
-        dict["gapped"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
+        dict["gapped"] = "results/peaks/broad/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
     else: # narrow peak output
-        dict["summits"] = "results/peaks/macs2/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
-
+        dict["summits"] = "results/peaks/narrow/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
 
     return dict
+
+
+def mitochondrial_genome_name():
+    """
+    Returns mitochondrial genome name as string based species.
+    Needed for removing mitochondrial sequences from fasta file.
+    """
+    if "hg" in genome or "mm" in genome:
+        return "MT"
+    elif "dm" in genome:
+        return "mitochondrion_genome"
+
+
+def calculate_effective_genome_sizes_input():
+    """
+    Returns input files for calculate_effective_genome_sizes rule
+    """
+    _dict = {
+            "multiqc": "results/qc/multiqc_data/multiqc_general_stats.txt",
+        }
+
+    if config["remove_MT_seqs"]:
+        _dict["mgs"] = f"resources/{genome}_mt_genome_size.txt"
+
+    return _dict
