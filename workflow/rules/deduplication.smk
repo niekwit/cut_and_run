@@ -16,7 +16,7 @@ if config["deduplication"]:
             runtime=config["resources"]["deeptools"]["cpu"],
             mem_mb=2048,
         wrapper:
-            "v3.3.3/bio/picard/markduplicates"
+            "v3.3.6/bio/picard/markduplicates"
 
     rule dedup_bam_index:
         input:
@@ -31,4 +31,4 @@ if config["deduplication"]:
         log:
             "logs/samtools_index/{sample}.log",
         wrapper:
-            "v3.3.3/bio/samtools/index"
+            "v3.3.6/bio/samtools/index"
