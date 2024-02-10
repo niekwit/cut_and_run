@@ -44,6 +44,7 @@ class Resources:
         elif "dm" in genome:
             if genome == "dm6":
                 name = "BDGP6.46"
+                self.blacklist_url = "https://github.com/Boyle-Lab/Blacklist/raw/master/lists/dm6-blacklist.v2.bed.gz"
 
             self.fasta_url = f"{base_url}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.toplevel.fa.gz"
             self.mt_fasta_url = f"{base_url}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.MT.fa.gz"
@@ -65,6 +66,7 @@ class Resources:
         self.fasta = self._file_from_url(self.fasta_url)
         self.gtf = self._file_from_url(self.gtf_url)
         self.blacklist = self._file_from_url(self.blacklist_url)
+        self.ensembl_blacklist = self.blacklist.replace(".bed", ".ensembl.bed")
         self.mt_fasta = self._file_from_url(self.mt_fasta_url)
         self.nomt_fasta = self.fasta.replace(".fa", ".no_mt.fa")
         
