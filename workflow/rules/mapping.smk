@@ -14,7 +14,7 @@ rule bowtie2_align:
     output:
         "results/mapped/bowtie2_genome/{sample}.bam",
     params:
-        idx=f"resources/bowtie2_index/{genome}/index",
+        idx=lambda wc, input: input[0].replace(".1.bt2",""),
         min_len=config["bowtie2"]["min_length"],
         max_len=config["bowtie2"]["max_length"],
         min_mq=config["bowtie2"]["MAPQ_cutoff"],
