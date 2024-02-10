@@ -13,7 +13,7 @@ rule fastqc:
         runtime=config["resources"]["fastqc"]["time"],
         mem_mb=2048
     wrapper:
-        "v3.3.3/bio/fastqc"
+        "v3.3.6/bio/fastqc"
 
 
 rule multiqc:
@@ -24,6 +24,9 @@ rule multiqc:
         "results/qc/multiqc_data/multiqc_general_stats.txt",
     params:
         extra="",  # Optional: extra parameters for multiqc
+    threads: 1
+    resources:
+        runtime=15,
     log:
         "logs/multiqc/multiqc.log"
     conda:
@@ -37,3 +40,21 @@ rule multiqc:
         "{input} "
         "2> {log}"
 
+
+rule calculate_effective_genome_sizes:
+        input:
+            **calculate_effective_genome_sizes_input()
+        output:
+            egs="results/effective_genome_sizes/effective_genome_sizes.csv",
+        params:
+            genome=genome,
+            remove_MT_seqs=config["remove_MT_seqs"],
+        threads: 1
+        resources:
+            runtime=10
+        conda:
+            "../envs/deeptools.yaml"
+        log:
+            "logs/effective_genome_sizes/effective_genome_sizes.log"
+        script:
+            "../scripts/effective_genome_size.py"
