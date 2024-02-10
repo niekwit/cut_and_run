@@ -1,6 +1,6 @@
 # Notes: 
 # Use Python style for boolean values (True/False)
-genome: hg38
+genome: dm6
 ensembl_genome_build: "110"
 spike-in:
   apply_spike_in: False
@@ -13,6 +13,7 @@ cutadapt:
   extra: "-q 20 " # Quality score cutoff
   min_length: 30
 remove_MT_seqs: True # Create bowtie2 index without MT sequences
+remove_blacklisted_regions: True # Remove blacklisted regions from the genome
 bowtie2:
   min_length: 10 # The minimum fragment length for valid paired-end alignments
   max_length: 700 # The maximum fragment length for valid paired-end alignments
@@ -43,12 +44,12 @@ deeptools:
     alpha: 1.0
     extra: "" 
 peak_calling:
-  input_available: False
-  IgG_available: False
+  control_available: False # Input, IgG or other control sample is available
   macs2: # use MACS2 for peak calling and DiffBind for differential analysis
-    use_macs2: False
+    use_macs2: True
     broad: False
     qvalue: 0.05
+    broad_cutoff: 0.1
     extra: ""
   htseq_count: # use HTSeq-count to count reads in gene regions and DESeq2 for differential analysis
     use_htseq_count: True
