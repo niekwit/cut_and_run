@@ -52,7 +52,7 @@ peak_calling:
     broad_cutoff: 0.1
     extra: ""
   htseq_count: # use HTSeq-count to count reads in gene regions and DESeq2 for differential analysis
-    use_htseq_count: True
+    use_htseq_count: False
     mode: intersection-nonempty # union, intersection-strict, intersection-nonempty
     feature: gene # GTF feature type to count reads in
     extra: "" # any additional parameters for htseq-count
