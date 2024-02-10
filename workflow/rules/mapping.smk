@@ -1,27 +1,3 @@
-rule bowtie2_build:
-    input:
-        ref=fasta(config, resources),
-    output:
-        multiext(
-            f"resources/bowtie2_index/{genome}/index",
-            ".1.bt2",
-            ".2.bt2",
-            ".3.bt2",
-            ".4.bt2",
-            ".rev.1.bt2",
-            ".rev.2.bt2",
-        ),
-    log:
-        "logs/bowtie2_build_genome/build.log",
-    params:
-        extra="",  # optional parameters
-    threads: config["resources"]["index"]["cpu"]
-    resources:
-        runtime=config["resources"]["index"]["time"],
-    wrapper:
-        "v3.3.6/bio/bowtie2/build"
-
-
 rule bowtie2_align:
     input:
         idx=multiext(
@@ -162,15 +138,18 @@ rule bam_sort:
     wrapper:
         "v3.3.6/bio/samtools/sort"
 
+"""
+if config["remove_blacklisted_regions"]:
+"""
 
 rule remove_blacklisted_regions:
     input:
         left="results/mapped/sorted/{sample}.bam",
-        right=resources.blacklist,
+        right=resources.ensembl_blacklist,
     output:
         "results/mapped/bl_removed/{sample}.bam",
     params:
-        extra="-v ", # only keeps regions in bam file that are not in bed file
+        extra="-v ", # Only keeps regions in bam file that are not in bed file
     threads: config["resources"]["mapping"]["cpu"]
     resources:
         runtime=config["resources"]["mapping"]["time"],
@@ -186,7 +165,7 @@ rule bam_index:
     output:
         "results/mapped/bl_removed/{sample}.bam.bai",
     params:
-        extra="",  # optional params string
+        extra="",  # Optional params string
     threads: config["resources"]["samtools"]["cpu"]
     resources:
         runtime=config["resources"]["samtools"]["time"],
