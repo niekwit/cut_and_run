@@ -27,8 +27,9 @@ csv = pd.read_csv("config/samples.csv")
 # get wildcard values
 SAMPLES = samples()
 BW_INPUT_DIR = bw_input_dir()
-CONDITIONS = conditions()
 IP_SAMPLES, CONTROL_SAMPLES = ip_samples()
+CONDITIONS = conditions()
+PEAK_MODE = peak_mode()
 
 # import rules
 include: "rules/fastqc.smk"
@@ -46,11 +47,13 @@ include: "rules/peaks.smk"
 rule all:
     input: 
         targets()
+        #expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES)
+        #expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS)
 
 # Set local rules
 localrules: all
 
-# save snakemake terminal output to log file
+# Save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 snake_log = f"logs/snakemake/{time}_snakemake.log"
 os.makedirs("logs/snakemake", exist_ok=True)
@@ -58,7 +61,6 @@ os.makedirs("logs/snakemake", exist_ok=True)
 onsuccess: 
     shell("cp -v {log} {snake_log}")
     print("Analysis finished successfully!")
-
 onerror:
     shell("cp -v {log} {snake_log}")
     print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
