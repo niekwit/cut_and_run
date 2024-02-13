@@ -1,37 +1,70 @@
 if config["peak_calling"]["macs2"]["use_macs2"]:
     if not config["peak_calling"]["macs2"]["broad"]:
         sys.stderr.write("MAC2S narrow peak calling selected...\n")
-        rule call_peaks_macs2_narrow:
-            input: 
-                unpack(macs2_input)
-            output:
-                xls="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls",
-                peak="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.narrowPeak",
-                bed="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_summits.bed",
-                #unpack(macs2_output) don't think you can use function in output
-            params:
-                genome=resources.genome,
-                outdir= lambda wc, output: os.path.dirname(output[0]),
-                mode="narrow",
-                qvalue=config["peak_calling"]["macs2"]["qvalue"],
-                control=control_available(),
-                csv=csv,
-                extra=config["peak_calling"]["macs2"]["extra"],
-            threads: config["resources"]["macs2"]["cpu"]
-            resources:
-                runtime=config["resources"]["macs2"]["time"]
-            conda:
-                "../envs/peaks.yaml",
-            log:
-                "logs/macs2/narrow/{bw_input_dir}/{ip_sample}.log"
-            script:
-                "../scripts/macs2.py"
+        if control_available():
+            rule call_peaks_macs2_narrow:
+                input: 
+                    bam="results/mapped/{bw_input_dir}/{ip_sample}.bam",
+                    bai="results/mapped/{bw_input_dir}/{ip_sample}.bam.bai",
+                    cbam="results/mapped/{bw_input_dir}/{control_sample}.bam",
+                    cbais="results/mapped/{bw_input_dir}/{control_sample}.bam.bai",
+                    egs="results/effective_genome_sizes/effective_genome_sizes.csv",
+                output:
+                    xls="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls",
+                    peak="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.narrowPeak",
+                    bed="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_summits.bed",
+                params:
+                    genome=resources.genome,
+                    outdir= lambda wc, output: os.path.dirname(output[0]),
+                    mode="narrow",
+                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    control=control_available(),
+                    csv=csv,
+                    extra=config["peak_calling"]["macs2"]["extra"],
+                threads: config["resources"]["macs2"]["cpu"]
+                resources:
+                    runtime=config["resources"]["macs2"]["time"]
+                conda:
+                    "../envs/peaks.yaml",
+                log:
+                    "logs/macs2/narrow/{bw_input_dir}/{ip_sample}_vs_{control_sample}.log"
+                script:
+                    "../scripts/macs2.py"
+        else:
+            rule call_peaks_macs2_narrow:
+                input: 
+                    bam="results/mapped/{bw_input_dir}/{ip_sample}.bam",
+                    bai="results/mapped/{bw_input_dir}/{ip_sample}.bam.bai",
+                    egs="results/effective_genome_sizes/effective_genome_sizes.csv",
+                output:
+                    xls="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls",
+                    peak="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.narrowPeak",
+                    bed="results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_summits.bed",
+                params:
+                    genome=resources.genome,
+                    outdir= lambda wc, output: os.path.dirname(output[0]),
+                    mode="narrow",
+                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    control=control_available(),
+                    csv=csv,
+                    extra=config["peak_calling"]["macs2"]["extra"],
+                threads: config["resources"]["macs2"]["cpu"]
+                resources:
+                    runtime=config["resources"]["macs2"]["time"]
+                conda:
+                    "../envs/peaks.yaml",
+                log:
+                    "logs/macs2/narrow/{bw_input_dir}/{ip_sample}.log"
+                script:
+                    "../scripts/macs2.py"
 
 
         rule call_peaks_macs2_narrow_replicates:
             input:
-                bams=expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
-                bais=expand("results/mapped/{bw_input_dir}/{sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+                bams=expand("results/mapped/{bw_input_dir}/{ip_sample}.bam", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                bais=expand("results/mapped/{bw_input_dir}/{ip_sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                cbams=expand("results/mapped/{bw_input_dir}/{control_sample}.bam", bw_input_dir=BW_INPUT_DIR, control_sample=CONTROL_SAMPLES), # This will return no files if no control samples are provided
+                cbais=expand("results/mapped/{bw_input_dir}/{control_sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, control_sample=CONTROL_SAMPLES), # This will return no files if no control samples are provided
                 egs="results/effective_genome_sizes/effective_genome_sizes.csv"
             output:
                 xls=expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
@@ -56,49 +89,109 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
 
     else:
         sys.stderr.write("MAC2S broad peak calling selected...\n")
-        rule call_peaks_macs2_broad:
-            input: 
-                unpack(macs2_input)
+        if control_available():
+            rule call_peaks_macs2_broad:
+                input: 
+                    bam="results/mapped/{bw_input_dir}/{ip_sample}.bam",
+                    bai="results/mapped/{bw_input_dir}/{ip_sample}.bam.bai",
+                    cbam="results/mapped/{bw_input_dir}/{control_sample}.bam",
+                    cbais="results/mapped/{bw_input_dir}/{control_sample}.bam.bai",
+                    egs="results/effective_genome_sizes/effective_genome_sizes.csv",
+                output:
+                    xls="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls",
+                    peak="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.broadPeak",
+                    gapped="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.gappedPeak",
+                params:
+                    genome=resources.genome,
+                    outdir= lambda wc, output: os.dirname(output[0]),
+                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    bc=config["peak_calling"]["macs2"]["broad_cutoff"],
+                    control=control_available(),
+                    mode="broad",
+                    extra=config["peak_calling"]["macs2"]["extra"],
+                threads: config["resources"]["macs2"]["cpu"]
+                resources:
+                    runtime=config["resources"]["macs2"]["time"]
+                conda:
+                    "../envs/peaks.yaml",
+                log:
+                    "logs/macs2/broad/{bw_input_dir}/{ip_sample}_vs_{control_sample}.log"
+                script:
+                    "../scripts/macs2.py"
+        else:
+            rule call_peaks_macs2_broad:
+                input: 
+                    bam="results/mapped/{bw_input_dir}/{ip_sample}.bam",
+                    bai="results/mapped/{bw_input_dir}/{ip_sample}.bam.bai",
+                    egs="results/effective_genome_sizes/effective_genome_sizes.csv",
+                output:
+                    xls="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls",
+                    peak="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.broadPeak",
+                    gapped="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.gappedPeak",
+                params:
+                    genome=resources.genome,
+                    outdir= lambda wc, output: os.dirname(output[0]),
+                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    bc=config["peak_calling"]["macs2"]["broad_cutoff"],
+                    control=control_available(),
+                    mode="broad",
+                    extra=config["peak_calling"]["macs2"]["extra"],
+                threads: config["resources"]["macs2"]["cpu"]
+                resources:
+                    runtime=config["resources"]["macs2"]["time"]
+                conda:
+                    "../envs/peaks.yaml",
+                log:
+                    "logs/macs2/broad/{bw_input_dir}/{ip_sample}.log"
+                script:
+                    "../scripts/macs2.py"
+
+        rule call_peaks_macs2_broad_replicates:
+            input:
+                bams=expand("results/mapped/{bw_input_dir}/{ip_sample}.bam", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                bais=expand("results/mapped/{bw_input_dir}/{ip_sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                cbams=expand("results/mapped/{bw_input_dir}/{control_sample}.bam", bw_input_dir=BW_INPUT_DIR, control_sample=CONTROL_SAMPLES), # This will return no files if no control samples are provided
+                cbais=expand("results/mapped/{bw_input_dir}/{control_sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, control_sample=CONTROL_SAMPLES), # This will return no files if no control samples are provided
+                egs="results/effective_genome_sizes/effective_genome_sizes.csv"
             output:
-                xls="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls",
-                peak="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.broadPeak",
-                bed="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_summits.bed",
-                gapped="results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.gappedPeak",
-                #unpack(macs2_output) don't think you can use a function in output
+                xls=expand("results/peaks/broad/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+                peak=expand("results/peaks/broad/{bw_input_dir}/{condition}/{condition}_peaks.broadPeak", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+                gapped=expand("results/peaks/broad/{bw_input_dir}/{condition}/{condition}_peaks.gappedPeak", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
             params:
                 genome=resources.genome,
-                outdir= lambda wc, output: os.dirname(output[0]),
-                qvalue=config["peak_calling"]["macs2"]["qvalue"],
-                bc=config["peak_calling"]["macs2"]["broad_cutoff"],
-                control=config["peak_calling"]["control_available"],
                 mode="broad",
+                bc=config["peak_calling"]["macs2"]["broad_cutoff"],
+                qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                control=control_available(),
+                csv=csv,
                 extra=config["peak_calling"]["macs2"]["extra"],
             threads: config["resources"]["macs2"]["cpu"]
             resources:
-                runtime=config["resources"]["macs2"]["time"]
+                runtime=config["resources"]["macs2"]["time"] * 4
             conda:
                 "../envs/peaks.yaml",
             log:
-                "logs/macs2/broad/{bw_input_dir}/{ip_sample}.log"
+                expand("logs/macs2/narrow/{bw_input_dir}/{condition}.log", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS)
             script:
-                "../scripts/macs2.py"
+                "../scripts/macs2_replicates.py"
 
     rule diffbind: # Compute differential peaks using DiffBind
         input:
-            unpack(diffbind_input)
+            #unpack(diffbind_input)
+            xls=expand("results/peaks/{peak_mode}/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES, peak_mode=PEAK_MODE),
+            bam=expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
         output:
-            dba="results/peaks/diffbind/{bw_input_dir}/dba.RData",
-            pca="results/peaks/diffbind/{bw_input_dir}/PCA.pdf",
-            sc="results/peaks/diffbind/{bw_input_dir}/SampleCorrelation.pdf",
-            pp="results/peaks/diffbind/{bw_input_dir}/ProfilePLot.pdf",
-            _dir=directory("results/peaks/diffbind/{bw_input_dir}/")
+            dba="results/peaks/diffbind/{peak_mode}/{bw_input_dir}/dba.RData",
+            pca="results/peaks/diffbind/{peak_mode}/{bw_input_dir}/PCA.pdf",
+            sc="results/peaks/diffbind/{peak_mode}/{bw_input_dir}/SampleCorrelation.pdf",
+            pp="results/peaks/diffbind/{peak_mode}/{bw_input_dir}/ProfilePLot.pdf",
+            _dir=directory("results/peaks/diffbind/{peak_mode}/{bw_input_dir}/")
         params:
             control=control_available(),
-        
         conda:
-            "../envs/R.yaml"
+            "../envs/diffbind.yaml"
         log:
-            "logs/diffbind/{bw_input_dir}/diffbind.log"
+            "logs/diffbind/{peak_mode}/{bw_input_dir}/diffbind.log"
         script:
             "scripts/diffbind.R"
 
