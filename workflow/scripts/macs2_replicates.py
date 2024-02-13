@@ -15,8 +15,6 @@ def get_egs(sample):
             if sample_name == sample:
                 return int(row[1])
  
-log = snakemake.log_fmt_shell(stdout=True, stderr=True)
-
 # Load sample information
 sample_info = pd.read_csv("config/samples.csv")
 
@@ -29,17 +27,20 @@ extra = snakemake.params["extra"]
 egs = snakemake.input["egs"]
 _csv = snakemake.params["csv"]
 xls_out = snakemake.output["xls"]
+logs = snakemake.log
 
 # Set peak calling mode
 if mode == "broad":
-    broad_cutoff = snakemake.params["bc"]
-    mode = "--broad --broad-cutoff {broad_cutoff} "
+    broad_cutoff = str(snakemake.params["bc"])
+    mode = f"--broad --broad-cutoff {broad_cutoff} "
 else:
     mode = ""
 
 # Run MACS2 for each condition and match controls
 conditions = list(set(re.sub("_[\d]$", "", x) for x in sample_info["sample"].tolist()))
 for c in conditions:
+    #log = snakemake.log_fmt_shell(stdout=True, stderr=True)
+    
     b = [x for x in bams if c in x]
     
     if not control_available:

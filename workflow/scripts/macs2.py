@@ -13,7 +13,7 @@ sample = snakemake.wildcards["ip_sample"]
 control_available = snakemake.params["control"]
 mode = snakemake.params["mode"]
 outdir = snakemake.params["outdir"]
-ip_bam = snakemake.input["ip_bam"]
+ip_bam = snakemake.input["bam"]
 qvalue = snakemake.params["qvalue"]
 extra = snakemake.params["extra"]
 egs = snakemake.input["egs"]
@@ -22,12 +22,12 @@ egs = snakemake.input["egs"]
 if not control_available:
     control = ""
 else:
-    control_bam = snakemake.input["control_bam"]
+    control_bam = snakemake.input["cbam"]
     control = f"--control {control_bam}"
 
 if mode == "broad":
-    broad_cutoff = snakemake.params["bc"]
-    mode = "--broad --broad-cutoff {broad_cutoff}"
+    broad_cutoff = str(snakemake.params["bc"])
+    mode = f"--broad --broad-cutoff {broad_cutoff}"
 else:
     mode = ""
  
