@@ -8,3 +8,5 @@ dependencies:
   - python=3.10
   - pandas=2.1.4
   - pysam=0.22.0
+  - wiggletools=1.2.11
+  - ucsc-wigtobigwig=447
