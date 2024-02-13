@@ -154,6 +154,24 @@ rule bowtie2_build:
         "v3.3.6/bio/bowtie2/build"
 
 
+rule chrom_sizes:
+    input:
+        fa=resources.fasta,
+        fai=f"{resources.fasta}.fai",
+    output:
+        f"resources/{resources.genome}_chrom.sizes",
+    log:
+        "logs/resources/chrom_sizes.log"
+    threads: config["resources"]["plotting"]["cpu"]
+    resources: 
+        runtime=config["resources"]["plotting"]["time"]
+    conda:
+        "../envs/mapping.yaml"
+    shell:
+        "awk '{{print $1,$2}}' {input.fai} | "
+        r"sed 's/ /\t/' > {output}"
+
+
 rule compress_resources:
     input:
         f=resources.fasta,
