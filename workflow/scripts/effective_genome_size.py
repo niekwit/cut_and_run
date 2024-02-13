@@ -58,9 +58,9 @@ df = pd.DataFrame(columns=["sample", "effective_genome_size"])
 
 # Iterate over rows to get read length and effective genome size and add to df
 for index, row in multiqc.iterrows():
-    sample = row[0]
+    sample = row.iloc[0]
     sample = re.sub(r"_R[12]_001", "", sample)
-    read_length = row[4]
+    read_length = row.iloc[4]
     
     # If read length is not in dict, pick the closest read length
     if read_length not in default_effective_genome_size[genome]:
