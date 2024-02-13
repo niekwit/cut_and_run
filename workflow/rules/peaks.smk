@@ -14,15 +14,46 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 outdir= lambda wc, output: os.path.dirname(output[0]),
                 mode="narrow",
                 qvalue=config["peak_calling"]["macs2"]["qvalue"],
-                control=config["peak_calling"]["control_available"],
-                extra="",
+                control=control_available(),
+                csv=csv,
+                extra=config["peak_calling"]["macs2"]["extra"],
             threads: config["resources"]["macs2"]["cpu"]
             resources:
                 runtime=config["resources"]["macs2"]["time"]
+            conda:
+                "../envs/peaks.yaml",
             log:
                 "logs/macs2/narrow/{bw_input_dir}/{ip_sample}.log"
             script:
                 "../scripts/macs2.py"
+
+
+        rule call_peaks_macs2_narrow_replicates:
+            input:
+                bams=expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+                bais=expand("results/mapped/{bw_input_dir}/{sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+                egs="results/effective_genome_sizes/effective_genome_sizes.csv"
+            output:
+                xls=expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+                peak=expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.narrowPeak", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+                bed=expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_summits.bed", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+            params:
+                genome=resources.genome,
+                mode="narrow",
+                qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                control=control_available(),
+                csv=csv,
+                extra=config["peak_calling"]["macs2"]["extra"],
+            threads: config["resources"]["macs2"]["cpu"]
+            resources:
+                runtime=config["resources"]["macs2"]["time"] * 4
+            conda:
+                "../envs/peaks.yaml",
+            log:
+                expand("logs/macs2/narrow/{bw_input_dir}/{condition}.log", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS)
+            script:
+                "../scripts/macs2_replicates.py"
+
     else:
         sys.stderr.write("MAC2S broad peak calling selected...\n")
         rule call_peaks_macs2_broad:
@@ -41,10 +72,12 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 bc=config["peak_calling"]["macs2"]["broad_cutoff"],
                 control=config["peak_calling"]["control_available"],
                 mode="broad",
-                extra="",
+                extra=config["peak_calling"]["macs2"]["extra"],
             threads: config["resources"]["macs2"]["cpu"]
             resources:
                 runtime=config["resources"]["macs2"]["time"]
+            conda:
+                "../envs/peaks.yaml",
             log:
                 "logs/macs2/broad/{bw_input_dir}/{ip_sample}.log"
             script:
@@ -54,9 +87,18 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
         input:
             unpack(diffbind_input)
         output:
-            dba="dba.RData",
+            dba="results/peaks/diffbind/{bw_input_dir}/dba.RData",
+            pca="results/peaks/diffbind/{bw_input_dir}/PCA.pdf",
+            sc="results/peaks/diffbind/{bw_input_dir}/SampleCorrelation.pdf",
+            pp="results/peaks/diffbind/{bw_input_dir}/ProfilePLot.pdf",
+            _dir=directory("results/peaks/diffbind/{bw_input_dir}/")
         params:
-            control=config["peak_calling"]["control_available"],
+            control=control_available(),
+        
+        conda:
+            "../envs/R.yaml"
+        log:
+            "logs/diffbind/{bw_input_dir}/diffbind.log"
         script:
             "scripts/diffbind.R"
 
@@ -120,7 +162,3 @@ elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
             "../envs/R.yaml"
         script:
             "../scripts/differential_peaks_DESeq2.R"
-
-else:
-    sys.stderr.write("WARNING: Skipping peak calling (no peak calling method selected)...\n")
-    
