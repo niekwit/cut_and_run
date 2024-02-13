@@ -21,6 +21,43 @@ rule bigwig:
         "../scripts/bigwig.py"
 
 
+rule average_wig:
+    input:
+        expand("results/bigwig/{bw_input_dir}/{sample}.bw", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+    output:
+        wig=temp("results/bigwig/average_bw/{bw_input_dir}/{condition}.wig"),
+    params:
+        extra="",
+    threads: config["resources"]["deeptools"]["cpu"]
+    resources:
+        runtime=config["resources"]["deeptools"]["time"]
+    log:
+        "logs/wiggletools/{bw_input_dir}/wig_average_{condition}.log"
+    conda:
+        "../envs/deeptools.yaml"
+    script:
+        "../scripts/average_wig.py"
+
+
+rule wig2bigwig:
+    input:
+        wig="results/bigwig/average_bw/{bw_input_dir}/{condition}.wig",
+        cs=f"resources/{resources.genome}_chrom.sizes",
+    output:
+        "results/bigwig/{bw_input_dir}/average_bw/{condition}.bw",
+    params:
+        extra="",
+    threads: config["resources"]["deeptools"]["cpu"]
+    resources:
+        runtime=config["resources"]["deeptools"]["time"]
+    log:
+        "logs/wigToBigWig/{bw_input_dir}/{condition}.log"
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "wigToBigWig {input.wig} {input.cs} {output}"
+
+'''
 rule average_bigwigs:
     input:
         expand("results/bigwig/{bw_input_dir}/{sample}.bw", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
@@ -37,3 +74,5 @@ rule average_bigwigs:
         "../envs/deeptools.yaml"
     script:
         "../scripts/average_bigwig.py"
+'''
+
