@@ -89,7 +89,7 @@ rule BAM_fragment_sizes:
 
 rule computeMatrix:
     input:
-        bw=expand("results/bigwig/average_bw/{condition}.bw", condition=CONDITIONS),
+        bw=expand("results/bigwig/{bw_input_dir}/average_bw/{condition}.bw", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
         gtf=resources.gtf,
     output:
         mat="results/deeptools/matrix.gz",
