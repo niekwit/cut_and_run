@@ -17,7 +17,6 @@ def targets():
         "results/qc/fragment_lengths.tsv",
         "results/plots/heatmap.pdf",
         "results/deeptools/heatmap_matrix.gz",
-        expand("results/peaks/diffbind/{peak_mode}/{bw_input_dir}/dba.RData", peak_mode=PEAK_MODE, bw_input_dir=BW_INPUT_DIR),
     ]
 
     ### Add conditional targets
@@ -25,39 +24,47 @@ def targets():
     if config["peak_calling"]["macs2"]["use_macs2"]:
         if config["peak_calling"]["macs2"]["broad"]:
             TARGETS.extend([
-                expand("results/peaks/broad/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
-                expand("results/peaks/broad/{bw_input_dir}/{condition}/{condition}_peaks.broadPeak", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
-                expand("results/peaks/broad/{bw_input_dir}/{condition}/{condition}_peaks.gappedPeak", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.xls", condition=CONDITIONS),
+                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.broadPeak", condition=CONDITIONS),
+                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.gappedPeak", condition=CONDITIONS),
+                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.bed", condition=CONDITIONS),
+                expand("results/peaks/broad/bl_removed/{condition}/{condition}_annotated.peaks.txt", condition=CONDITIONS),
+                expand("results/plots/peaks/broad/bl_removed/{condition}/{condition}_annotated_peaks_bar.pdf", condition=CONDITIONS),
+                expand("results/plots/peaks/broad/bl_removed/{condition}/{condition}_annotated_peaks_tss.pdf", condition=CONDITIONS),
             ]) 
             if control_available():
                 TARGETS.extend([
-                    expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.broadPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.gappedPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.broadPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.gappedPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
                 ])
             else:
                 TARGETS.extend([
-                    expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
-                    expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.broadPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
-                    expand("results/peaks/broad/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.gappedPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_peaks.xls", ip_sample=IP_SAMPLES),
+                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_peaks.broadPeak", ip_sample=IP_SAMPLES),
+                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_peaks.gappedPeak", ip_sample=IP_SAMPLES),
                 ])
         else:
             TARGETS.extend([
-                expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
-                expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.narrowPeak", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
-                expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_summits.bed", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_peaks.xls", condition=CONDITIONS),
+                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_peaks.narrowPeak", condition=CONDITIONS),
+                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_summits.bed", condition=CONDITIONS),
+                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_peaks.bed", condition=CONDITIONS),
+                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_annotated.peaks.txt", condition=CONDITIONS),
+                expand("results/plots/peaks/narrow/bl_removed/{condition}/{condition}_annotated_peaks_bar.pdf", condition=CONDITIONS),
+                expand("results/plots/peaks/narrow/bl_removed/{condition}/{condition}_annotated_peaks_tss.pdf", condition=CONDITIONS),
             ])
             if control_available():
                 TARGETS.extend([
-                    expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.narrowPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_vs_{control_sample}_summits.bed", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.narrowPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_summits.bed", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
                 ]) 
             else:
                 TARGETS.extend([
-                    expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
-                    expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.narrowPeak", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
-                    expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_summits.bed", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES),
+                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_peaks.xls", ip_sample=IP_SAMPLES),
+                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_peaks.narrowPeak", ip_sample=IP_SAMPLES),
+                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_summits.bed", ip_sample=IP_SAMPLES),
                 ])
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend([
@@ -184,7 +191,7 @@ def bw_input_dir():
     else:
         return ["bl_removed"]
     
-
+'''
 def dedup_input_dir():
     """
     Returns input dir for deduplication rule
@@ -193,7 +200,7 @@ def dedup_input_dir():
         return ["bl_removed"]
     else:
         return ["sorted"]
-
+'''
 
 def conditions():
     """
@@ -220,7 +227,7 @@ def ip_samples():
         ip_samples = []
         input_samples = []
         sys.stderr.write("WARNING: Skipping peak calling (no peak calling method selected)...\n")
-    
+
     return ip_samples, input_samples
 
 
@@ -303,7 +310,7 @@ def macs2_mode():
     else:
         return "narrow"
 
-
+'''
 def macs2_input(wildcards):
     """
     Returns named input files as dictionary for call_peaks_macs2 rule.
@@ -321,7 +328,7 @@ def macs2_input(wildcards):
 
     return _dict
 
-'''
+
 def macs2_input_replicates(wildcards):
     """
     Returns named input files as dictionary for call_peaks_macs2 rule.
@@ -339,13 +346,26 @@ def macs2_input_replicates(wildcards):
 
     return _dict
 '''
+
 def run_diffbind():
     """
     Returns True if diffbind rule should be run, False otherwise
     """
-    
+    references = list(set(csv["reference"]))
+    if len(references) == 1:
+        # Check if value is "no"
+        if references[0].lower() == "no":
+            return False
+        else:
+            return True
+    else:
+        # Check if any value is "yes"
+        if "yes" in references:
+            return True
+        else:
+            return False
 
-
+'''
 def diffbind_input(wildcards):
     """
     Returns named input files as dictionary for diffbind rule.
@@ -363,14 +383,14 @@ def diffbind_input(wildcards):
     if control_available():
         _dict["control_bam"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam".format(wildcards=wildcards)),
         _dict["control_bai"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
-    '''
+    
     if mode == "broad":
         dict["gapped"] = "results/peaks/broad/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
     else: # narrow peak output
         dict["summits"] = "results/peaks/narrow/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
-    '''
+    
     return _dict
-
+'''
 
 def mitochondrial_genome_name():
     """
@@ -405,3 +425,5 @@ def peak_mode():
         return "broad"
     else:
         return "narrow"
+
+
