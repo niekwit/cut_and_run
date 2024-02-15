@@ -40,7 +40,14 @@ with open(egs, 'r') as file:
         if sample_name == sample:
             effective_genome_size = int(row[1])
             break
- 
+
+# Define file basename
+if not control_available:
+    name = sample
+else:
+    control_sample = snakemake.wildcards["control_sample"]
+    name = f"{sample}_vs_{control_sample}"
+
 # Run MACS2
 shell(
     "macs2 callpeak "
@@ -52,7 +59,7 @@ shell(
     "--keep-dup all "
     "{mode} "
     "--outdir {outdir} "
-    "--name {sample} "
+    "--name {name} "
     "{extra} "
     "{log} "
 )
