@@ -172,6 +172,22 @@ rule chrom_sizes:
         r"sed 's/ /\t/' > {output}"
 
 
+rule create_annotation_file:
+    input:
+        gtf=resources.gtf,
+    output:
+        rdata=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
+    log:
+        "logs/resources/create_annotation_file.log"
+    threads: config["resources"]["plotting"]["cpu"]
+    resources: 
+        runtime=config["resources"]["plotting"]["time"]
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/create_annotation_file.R"
+
+
 rule compress_resources:
     input:
         f=resources.fasta,
