@@ -7,6 +7,7 @@ spike-in:
   genome: MG1655
   ensembl_genome_build: "57"
   normalisation: divide # bigwig normalisation method: divide or multiply
+use_trim_galore: False # Use Trim_galore instead of cutadapt
 cutadapt:
   a: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA;min_overlap=6
   A: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT;min_overlap=6
@@ -44,7 +45,6 @@ deeptools:
     alpha: 1.0
     extra: "" 
 peak_calling:
-  control_available: False # Input, IgG or other control sample is available
   macs2: # use MACS2 for peak calling and DiffBind for differential analysis
     use_macs2: True
     broad: False
@@ -52,7 +52,7 @@ peak_calling:
     broad_cutoff: 0.1
     extra: ""
   htseq_count: # use HTSeq-count to count reads in gene regions and DESeq2 for differential analysis
-    use_htseq_count: True
+    use_htseq_count: False
     mode: intersection-nonempty # union, intersection-strict, intersection-nonempty
     feature: gene # GTF feature type to count reads in
     extra: "" # any additional parameters for htseq-count
@@ -93,4 +93,3 @@ resources: # computing resources
   plotting:
     cpu: 2
     time: 20
-

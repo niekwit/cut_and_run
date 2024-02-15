@@ -7,6 +7,7 @@ spike-in:
   genome: MG1655
   ensembl_genome_build: "57"
   normalisation: divide # bigwig normalisation method: divide or multiply
+use_trim_galore: False # Use Trim_galore instead of cutadapt
 cutadapt:
   a: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA;min_overlap=6
   A: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT;min_overlap=6
@@ -44,7 +45,6 @@ deeptools:
     alpha: 1.0
     extra: "" 
 peak_calling:
-  control_available: False
   macs2: # use MACS2 for peak calling and DiffBind for differential analysis
     use_macs2: False
     broad: False
