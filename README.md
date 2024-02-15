@@ -2,6 +2,7 @@
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥6.3.0-brightgreen.svg)](https://snakemake.github.io)
 [![Tests](https://github.com/niekwit/cut_and_run/actions/workflows/main.yml/badge.svg)](https://github.com/niekwit/cut_and_run/actions/workflows/main.yml)
+[![DOI](https://zenodo.org/badge/739444701.svg)](https://zenodo.org/doi/10.5281/zenodo.10667876)
 
 
 A Snakemake workflow for `Cut & Run seq`
