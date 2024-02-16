@@ -68,8 +68,8 @@ def targets():
                 ])
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend([
-            f"results/peaks/DESeq2/{BW_INPUT_DIR}/differential_peaks.xlsx",
-            f"results/peaks/DESeq2/{BW_INPUT_DIR}/dds.RData"
+            f"results/peaks/DESeq2/bl_removed/differential_peaks.xlsx",
+            f"results/peaks/DESeq2/bl_removed/dds.RData"
                         ])
     
     return TARGETS
@@ -208,6 +208,11 @@ def conditions():
     """
     # Get unique conditions from sample names
     conditions = list(set(re.sub("_[\d]$", "", x) for x in csv["sample"].tolist()))
+
+    # The same but for control samples and add to conditions
+    if control_available():
+        conditions.extend(list(set(re.sub("_[\d]$", "", x) for x in csv["control"].tolist())))
+
     return conditions
 
 
