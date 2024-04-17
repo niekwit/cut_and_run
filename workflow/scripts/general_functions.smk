@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import re
-import sys
+from snakemake.logging import logger
 
 def targets():
     """
@@ -17,59 +17,52 @@ def targets():
         "results/qc/fragment_lengths.tsv",
         "results/plots/heatmap.pdf",
         "results/deeptools/heatmap_matrix.gz",
+        "results/qc/pre_trim/multiqc.html",
     ]
 
     ### Add conditional targets
-    # Peak calling: #change to diffbind/chipseeker output later
+    # Peak calling: 
+    # there is a lot of redundancy in the peak calling targets code but
+    # it was very tricky to make a general function for this, optimise later?
     if config["peak_calling"]["macs2"]["use_macs2"]:
         if config["peak_calling"]["macs2"]["broad"]:
             TARGETS.extend([
-                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.xls", condition=CONDITIONS),
-                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.broadPeak", condition=CONDITIONS),
-                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.gappedPeak", condition=CONDITIONS),
-                expand("results/peaks/broad/bl_removed/{condition}/{condition}_peaks.bed", condition=CONDITIONS),
-                expand("results/peaks/broad/bl_removed/{condition}/{condition}_annotated.peaks.txt", condition=CONDITIONS),
-                expand("results/plots/peaks/broad/bl_removed/{condition}/{condition}_annotated_peaks_bar.pdf", condition=CONDITIONS),
-                expand("results/plots/peaks/broad/bl_removed/{condition}/{condition}_annotated_peaks_tss.pdf", condition=CONDITIONS),
+                f"results/plots/macs2_broad/fdr{fdr}/peaks_distance_to_TSS.pdf",
+                f"results/plots/macs2_broad/fdr{fdr}/peak_distributions.pdf",
             ]) 
             if control_available():
                 TARGETS.extend([
-                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.broadPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.gappedPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand(f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand(f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.broadPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand(f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.gappedPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
                 ])
             else:
                 TARGETS.extend([
-                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_peaks.xls", ip_sample=IP_SAMPLES),
-                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_peaks.broadPeak", ip_sample=IP_SAMPLES),
-                    expand("results/peaks/broad/bl_removed/{ip_sample}/{ip_sample}_peaks.gappedPeak", ip_sample=IP_SAMPLES),
+                    expand(f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls", ip_sample=IP_SAMPLES),
+                    expand(f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.broadPeak", ip_sample=IP_SAMPLES),
+                    expand(f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.gappedPeak", ip_sample=IP_SAMPLES),
                 ])
         else:
             TARGETS.extend([
-                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_peaks.xls", condition=CONDITIONS),
-                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_peaks.narrowPeak", condition=CONDITIONS),
-                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_summits.bed", condition=CONDITIONS),
-                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_peaks.bed", condition=CONDITIONS),
-                expand("results/peaks/narrow/bl_removed/{condition}/{condition}_annotated.peaks.txt", condition=CONDITIONS),
-                expand("results/plots/peaks/narrow/bl_removed/{condition}/{condition}_annotated_peaks_bar.pdf", condition=CONDITIONS),
-                expand("results/plots/peaks/narrow/bl_removed/{condition}/{condition}_annotated_peaks_tss.pdf", condition=CONDITIONS),
+                f"results/plots/macs2_narrow/fdr{fdr}/peaks_distance_to_TSS.pdf",
+                f"results/plots/macs2_narrow/fdr{fdr}/peak_distributions.pdf",
             ])
             if control_available():
                 TARGETS.extend([
-                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.xls", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_peaks.narrowPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
-                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_vs_{control_sample}_summits.bed", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand(f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand(f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.narrowPeak", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
+                    expand(f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_summits.bed", zip, ip_sample=IP_SAMPLES, control_sample=CONTROL_SAMPLES),
                 ]) 
             else:
                 TARGETS.extend([
-                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_peaks.xls", ip_sample=IP_SAMPLES),
-                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_peaks.narrowPeak", ip_sample=IP_SAMPLES),
-                    expand("results/peaks/narrow/bl_removed/{ip_sample}/{ip_sample}_summits.bed", ip_sample=IP_SAMPLES),
+                    expand(f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls", ip_sample=IP_SAMPLES),
+                    expand(f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak", ip_sample=IP_SAMPLES),
+                    expand(f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed", ip_sample=IP_SAMPLES),
                 ])
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend([
-            f"results/peaks/DESeq2/bl_removed/differential_peaks.xlsx",
-            f"results/peaks/DESeq2/bl_removed/dds.RData"
+            "results/htseq_count/DESeq2/differential_peaks.xlsx",
+            "results/htseq_count/DESeq2/dds.RData"
                         ])
     
     return TARGETS
@@ -78,13 +71,13 @@ def targets():
 def check_config():
     """
     Checks if config file values are valid entries
+    REPLACE WITH SCHEMA VALIDATION
     """
     # List to store parameters with wrong value
     wrong = []
     
     # Check boolean values
     check = {
-        "deduplication": config["deduplication"],
         "apply_spike_in": config["spike-in"]["apply_spike_in"],
         "remove_MT_seqs": config["remove_MT_seqs"],
     }
@@ -136,7 +129,7 @@ def samples():
     # Check if each sample name ends with _[0-9]
     wrong = []
     for sample in SAMPLES:
-        if not re.match(".*_[\d]$", sample):
+        if not re.match(".*_[0-9]$", sample):
             wrong.append(sample)
     if len(wrong) != 0:
         wrong = "\n".join(wrong)
@@ -181,37 +174,17 @@ def cutadapt_args(config, param):
         return f"--minimum-length {config['cutadapt']['min_length']} {config['cutadapt']['extra']}"
 
 
-def bw_input_dir():
-    """
-    Input function for bigwig rule.
-    Determines which bam files to use for bigwig generation: deduplicated or not.
-    """
-    if config["deduplication"]:
-        return ["deduplicated"]
-    else:
-        return ["bl_removed"]
-    
-'''
-def dedup_input_dir():
-    """
-    Returns input dir for deduplication rule
-    """
-    if config["remove_blacklisted_regions"]:
-        return ["bl_removed"]
-    else:
-        return ["sorted"]
-'''
-
-def conditions():
+def conditions(include_controls=False):
     """
     Returns condition wildcard values 
     """
     # Get unique conditions from sample names
-    conditions = list(set(re.sub("_[\d]$", "", x) for x in csv["sample"].tolist()))
+    conditions = list(set(re.sub("_[0-9]$", "", x) for x in csv["sample"].tolist()))
 
     # The same but for control samples and add to conditions
-    if control_available():
-        conditions.extend(list(set(re.sub("_[\d]$", "", x) for x in csv["control"].tolist())))
+    if include_controls:
+        if control_available():
+            conditions.extend(list(set(re.sub("_[0-9]$", "", x) for x in csv["control"].tolist())))
 
     return conditions
 
@@ -226,12 +199,13 @@ def ip_samples():
             input_samples = csv["control"].tolist()
         else:
             input_samples = []
-            sys.stderr.write("WARNING: No input/IgG/control samples applied for peak calling...\n")
-            sys.stderr.write("Peak calling will continue without control samples\n")
+            
+            logger.info("WARNING: No input/IgG/control samples applied for peak calling...")
+            logger.info("Peak calling will continue without control samples\n...")
     else:
         ip_samples = []
         input_samples = []
-        sys.stderr.write("WARNING: Skipping peak calling (no peak calling method selected)...\n")
+        logger.info("WARNING: Skipping peak calling (no peak calling method selected)...")
 
     return ip_samples, input_samples
 
@@ -250,9 +224,9 @@ def bw_input(wildcards):
     """
     # Create base input dictionary (these input files are always required)
     _dict = {
-        "bam": "results/mapped/{wildcards.bw_input_dir}/{wildcards.sample}.bam".format(wildcards=wildcards),
-        "bai": "results/mapped/{wildcards.bw_input_dir}/{wildcards.sample}.bam.bai".format(wildcards=wildcards),
-        "multiqc": "results/qc/multiqc_data/multiqc_general_stats.txt",
+        "bam": "results/mapped/{wildcards.sample}.bl.bam".format(wildcards=wildcards),
+        "bai": "results/mapped/{wildcards.sample}.bl.bam.bai".format(wildcards=wildcards),
+        "multiqc": "results/qc/pre_trim/multiqc_data/multiqc_general_stats.txt",
         "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
     # Add additional input files depending on config file
@@ -322,14 +296,14 @@ def macs2_input(wildcards):
     """
     # Base input
     _dict = {
-        "ip_bam": "results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards),
-        "bai": "results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
+        "ip_bam": "results/mapped/{wildcards.ip_sample}.bam".format(wildcards=wildcards),
+        "bai": "results/mapped/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
         "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
     # Add control sample if available
     if control_available():
-        _dict["control_bam"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam".format(wildcards=wildcards)
-        _dict["control_bai"] = "results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards)
+        _dict["control_bam"] = "results/mapped/{wildcards.control_sample}.bam".format(wildcards=wildcards)
+        _dict["control_bai"] = "results/mapped/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards)
 
     return _dict
 
@@ -340,14 +314,14 @@ def macs2_input_replicates(wildcards):
     """
     # Base input
     _dict = {
-        "ip_bams": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
-        "bais": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
+        "ip_bams": expand("results/mapped/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
+        "bais": expand("results/mapped/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
         "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
     # Add control sample if available
     if control_available():
-        _dict["control_bam"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam".format(wildcards=wildcards))
-        _dict["control_bai"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
+        _dict["control_bam"] = expand("results/mapped/{wildcards.control_sample}.bam".format(wildcards=wildcards))
+        _dict["control_bai"] = expand("results/mapped/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
 
     return _dict
 '''
@@ -370,32 +344,26 @@ def run_diffbind():
         else:
             return False
 
-'''
+
 def diffbind_input(wildcards):
     """
     Returns named input files as dictionary for diffbind rule.
     """
-    #mode = macs2_mode()
+    mode = peak_mode()
 
     # Base input
     _dict = {
-            "ip_bam": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
-            "bai": expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards)),
-            "xls": expand("results/peaks/{mode}/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.xls".format(wildcards=wildcards)),
-            #"peak": expand("results/peaks/{mode}/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.{mode}Peak".format(wildcards=wildcards, mode=mode)),
+            "ip_bam": expand("results/mapped/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
+            "bai": expand("results/mapped/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards)),
+            "xls": expand(f"results/{mode}/fdr{fdr}/{{wildcard.ip_sample}}/{{wildcard.ip_sample}}_vs_{{wildcard.control_sample}}_peaks.xls".format(wildcards=wildcards)),
         }
-        
+    # Add control bam files if available
     if control_available():
-        _dict["control_bam"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam".format(wildcards=wildcards)),
-        _dict["control_bai"] = expand("results/mapped/{wildcards.bw_input_dir}/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
-    
-    if mode == "broad":
-        dict["gapped"] = "results/peaks/broad/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks.gappedPeak".format(wildcards=wildcards)
-    else: # narrow peak output
-        dict["summits"] = "results/peaks/narrow/{wildcards.bw_input_dir}/{wildcards.ip_sample}/{wildcards.ip_sample}_peaks_summits.bed".format(wildcards=wildcards)
+        _dict["control_bam"] = expand("results/mapped/{wildcards.control_sample}.bam".format(wildcards=wildcards)),
+        _dict["control_bai"] = expand("results/mapped/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
     
     return _dict
-'''
+
 
 def mitochondrial_genome_name():
     """
@@ -413,7 +381,7 @@ def calculate_effective_genome_sizes_input():
     Returns input files for calculate_effective_genome_sizes rule
     """
     _dict = {
-            "multiqc": "results/qc/multiqc_data/multiqc_general_stats.txt",
+            "multiqc": "results/qc/pre_trim/multiqc_data/multiqc_general_stats.txt",
         }
 
     if config["remove_MT_seqs"]:
@@ -427,8 +395,13 @@ def peak_mode():
     Returns MACS2 peak calling mode as string based on config file
     """
     if config["peak_calling"]["macs2"]["broad"]:
-        return "broad"
+        return "macs2_broad"
     else:
-        return "narrow"
+        return "macs2_narrow"
 
 
+def peak_fdr(type_):
+    if type_ == "macs2_narrow":
+        return config["peak_calling"]["macs2"]["qvalue"]
+    elif type_ == "macs2_broad":
+        return config["peak_calling"]["macs2"]["broad_cutoff"]

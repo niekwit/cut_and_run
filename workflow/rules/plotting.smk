@@ -85,8 +85,8 @@ rule plot_heatmap:
 if config["peak_calling"]["htseq_count"]["use_htseq_count"]:
     rule plot_peaks_volcano:
         input:
-            xlsx="results/peaks/DESeq2/{bw_input_dir}/differential_peaks.xlsx",
-            dir="results/peaks/DESeq2/{bw_input_dir}/",
+            xlsx="results/peaks/DESeq2/differential_peaks.xlsx",
+            dir="results/peaks/DESeq2/",
         output:
             directory("results/plots/differential_peaks/volcano_plots"),
         params:

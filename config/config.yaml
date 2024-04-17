@@ -57,7 +57,6 @@ peak_calling:
     feature: gene # GTF feature type to count reads in
     extra: "" # any additional parameters for htseq-count
     DESeq2: 
-      deseq2_apply_control: False # If True, IP will be corrected for input/IgG signal
       cumulative_filter_out: 10 # Filter out genes with less than this number of reads
       smallest_group: 3 # Smallest group size for filter
       alpha: 0.05 # FDR cutoff for DESeq2/plots

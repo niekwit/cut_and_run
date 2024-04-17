@@ -116,7 +116,7 @@ plot_data <- function(df, title, y.axis, outfile){
                                  "Did not align"))
   
   # Save to file
-  ggsave(outfile, p, height = 5, width = length(log.files) * 2)
+  ggsave(outfile, p, height = 8, width = length(log.files) * 2)
 }
 
 plot_data(df.perc, "Concordant alignment rates (Bowtie2)", "Percentage of total reads", snakemake@output["rates"][[1]])

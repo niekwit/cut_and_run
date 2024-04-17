@@ -1,16 +1,6 @@
-if config["deduplication"]:
-    use rule bam_index as bam_index2 with:
-        input:
-            "results/mapped/{bw_input_dir}/{sample}.bam",
-        output:
-            "results/mapped/{bw_input_dir}/{sample}.bam.bai",
-        log:
-            "logs/samtools_index/{sample}_{bw_input_dir}.log",
-
-
 rule multiBigwigSummary:
     input:
-        expand("results/bigwig/{bw_input_dir}/{sample}.bw", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+        expand("results/bigwig/{sample}.bw", sample=SAMPLES),
     output:
         "results/deeptools/scores_per_bin.npz",
     params:
@@ -57,15 +47,14 @@ rule PCA:
 
 rule BAM_fragment_sizes:
     input:
-        bam=expand("results/mapped/{bw_input_dir}/{sample}.bam", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
-        bai=expand("results/mapped/{bw_input_dir}/{sample}.bam.bai", bw_input_dir=BW_INPUT_DIR, sample=SAMPLES),
+        bam=expand("results/mapped/{sample}.bl.bam", sample=SAMPLES),
+        bai=expand("results/mapped/{sample}.bl.bam.bai", sample=SAMPLES),
     output:
         hist="results/plots/qc/fragment_lengths.pdf",
         table="results/qc/fragment_lengths.tsv",
         raw="results/qc/fragment_lengths_raw.tsv",
     params:
         names= " ".join(SAMPLES),
-        dir=BW_INPUT_DIR[0],
         max_len=config["bowtie2"]["max_length"],
     threads: config["resources"]["deeptools"]["cpu"],
     resources:
@@ -83,13 +72,13 @@ rule BAM_fragment_sizes:
         "--table {output.table} "
         "--outRawFragmentLengths {output.raw} " 
         "--samplesLabel {params.names} " 
-        "--plotTitle 'Fragment size of PE data ({params.dir})' "
+        "--plotTitle 'Fragment size of PE data' "
         "> {log} 2>&1"
 
 
 rule computeMatrix:
     input:
-        bw=expand("results/bigwig/{bw_input_dir}/average_bw/{condition}.bw", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS),
+        bw=expand("results/bigwig/average_bw/{conditions}.bw", conditions=CONDITIONS),
         gtf=resources.gtf,
     output:
         mat="results/deeptools/matrix.gz",

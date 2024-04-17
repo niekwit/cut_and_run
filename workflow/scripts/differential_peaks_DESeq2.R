@@ -11,100 +11,66 @@ library(openxlsx)
 
 # Load Snakemake variables
 alpha <- snakemake@params[["alpha"]]
-deseq2_apply_control <- snakemake@params[["control"]]
-count.files <- snakemake@input[["counts"]]
-print(count.files)
-
-# Directory with htseq-count data files
-count.dir <- dirname(count.files[1])
+all.count.files <- snakemake@input[["counts"]]
+lfc <- snakemake@params[["fc"]]
 
 # Load sample information
 samples <- read.csv("config/samples.csv")
 names <- samples$sample
+control_names <- samples$control
 genotypes <- unique(samples$genotype)
 treatments <- unique(samples$treatment)
-controls <- unique(samples[(tolower(samples$factor) %in% c("input", "igg")), ]$sample)
 
 if (length(treatments) > 1) {
-  samples$comb <- paste0(samples$genotype, "_", samples$treatment)
+  samples$condition <- paste0(samples$genotype, "_", samples$treatment)
 } else {
-  samples$comb <- paste0(samples$genotype)
+  samples$condition <- samples$genotype
 }
 
-# Get reference condition(s)
-references <- unique(samples[samples$reference == "yes" ,]$comb)
-if (length(references) == 0){
-  stop("ERROR: No reference samples found. Please check your samples.csv file.")
+# Create sampleTable for DESeq2
+references <- unique(control_names)
+sampleName <- c(names, references)
+reference.condition <- gsub("_[^_]+$", "", references)
+condition <- c(samples$condition, reference.condition)
+fileName <- vector()
+for (i in seq_along(sampleName)) {
+  fileName[i] <- all.count.files[grep(sampleName[i], all.count.files)]
 }
+sampleTable <- data.frame(sampleName = sampleName,
+                        fileName = fileName,
+                        condition = condition)
 
-# Check if batch column exists
-if ("batch" %in% colnames(samples)) {
-  batches <- unique(samples$batch)
-  if (length(batches) == 1) {
-    batches <- 1
-    samples$batch <- 1
-  }
-} else {
-  batches <- 1
-  samples$batch <- 1
-}
+# Build the DESeqDataSet
+ddsHTSeq <- DESeqDataSetFromHTSeqCount(sampleTable = sampleTable,
+                                       directory = ".",
+                                       design = ~ condition)
 
-# Create df for DESeq2
-sampleFiles <- vector()
-for (i in seq_along(names)) {
-  sampleFiles[i] <- count.files[grep(names[i], count.files)]
-}
-
-sampleTable <- data.frame(sampleName = names,
-                          fileName = sampleFiles,
-                          condition = samples$comb,
-                          batch = samples$batch,
-                          reference = samples$reference)
-
-# Create DESeqDataSet
-if (batches == 1) {
-  ddsHTSeqCount <- DESeqDataSetFromHTSeqCount(sampleTable,
-                                              design = ~condition)
-} else {
-  ddsHTSeqCount <- DESeqDataSetFromHTSeqCount(sampleTable,
-                                              design = ~batch + condition)
-}
-
-# save DESeqDataSet to file before filtering
-save(ddsHTSeqCount, file = snakemake@output[["rdata"]])
-
-# Check if input or IgG controls are present and match to IP samples
-if (deseq2_apply_control == "True") {
-  if (is.null(controls)) {
-    print("WARNING: no input/IgG control samples found!")
-    print("Differential peaks will be calculated without control...")
-    deseq2_apply_control <- "False"
-  } else {
-    #TO DO
-    #CORRECT DATA FOR CONTROL
-  }
-}
+# Save DESeqDataSet to file before filtering
+save(ddsHTSeq, file = snakemake@output[["rdata"]])
 
 # Load one htseq-count data set for annotation (gene_name and biotype are not kept by DESeq2)
-annotation <- read.csv(count.files[1], sep = "\t", header = FALSE) %>%
+annotation <- read.csv(all.count.files[1], 
+                       sep = "\t", 
+                       header = FALSE) %>%
   select(V1, V2, V3)
 names(annotation) <- c("ensembl_gene_id", "gene_name", "biotype")
 
 # Filter out genes with very low read counts
 smallestGroupSize <- snakemake@params[["sg"]]
 cumulativeFilterOut <- snakemake@params[["cfo"]]
-keep <- rowSums(counts(ddsHTSeqCount) >= cumulativeFilterOut) >= smallestGroupSize
-ddsHTSeqCount <- ddsHTSeqCount[keep, ]
+keep <- rowSums(counts(ddsHTSeq) >= cumulativeFilterOut) >= smallestGroupSize
+ddsHTSeq <- ddsHTSeq[keep, ]
 
-# List to store data from each contrast (will be nested)
+# List to store data from each contrast
 resList <- list()
 
-for (r in seq_along(references)) {
+for (r in seq_along(unique(reference.condition))) {
   # Set reference condition
-  ddsHTSeqCount$condition <- relevel(ddsHTSeqCount$condition, ref = references[r])
+  print(paste0("Setting reference condition to ", unique(reference.condition)[r], "..."))
+  ddsHTSeq$condition <- relevel(ddsHTSeq$condition, ref = unique(reference.condition)[r])
 
   # Run DESeq2
-  dds <- DESeq(ddsHTSeqCount)
+  dds <- DESeq(ddsHTSeq)
   res <- results(dds)
   
   # Get all contrasts
@@ -117,44 +83,28 @@ for (r in seq_along(references)) {
     
     # Independent hypothesis weighting
     contrast <- contrasts[[i]]
-    
     print(paste0("Analysing contrast ", contrast, "..."))
-
     resIHW <- results(dds, 
                       filterFun = ihw, 
                       alpha = alpha,
-                      name=contrast)
-    
+                      name = contrast,
+                      lfcThreshold = lfc)
     # Print summary
     summary(resIHW)
     
     # Create df for results and add annotation
-    df <- as.data.frame(res) %>%
-      mutate(ensembl_gene_id = res@rownames, .before=1) %>%
+    df <- as.data.frame(resIHW) %>%
+      mutate(ensembl_gene_id = res@rownames, .before = 1) %>%
       left_join(annotation, by = "ensembl_gene_id") %>%
-      relocate(ensembl_gene_id, gene_name, biotype)
+      mutate(contrast = gsub("condition_", "", contrast)) %>%
+      relocate(contrast, ensembl_gene_id, gene_name, biotype)
     
-    resList_contrast[[str_replace(contrast, "condition_", "")]] <- df
-  }
-  resList[[references[r]]] <- resList_contrast
-}
-
-# function to flatten nested lists (https://stackoverflow.com/questions/16300344/how-to-flatten-a-list-of-lists/41882883#41882883)
-flattenlist <- function(x){  
-  morelists <- sapply(x, function(xprime) class(xprime)[1] == "list")
-  out <- c(x[!morelists], unlist(x[morelists], recursive = FALSE))
-  if(sum(morelists)) {
-    Recall(out)
-  } else {
-    return(out)
+    resList[[(length(resList) + 1)]] <- df
   }
 }
 
-# Flatten resList
-resList <- flattenlist(resList)
-
-# Remove reference name followed by dot from list element names
-names(resList) <- str_replace(names(resList), paste0("^", references, "\\."), "")
+# Name each df in resList
+names(resList) <- lapply(resList, function(df){unique(df$contrast)})
 
 # Save each df in resList to csv
 path <- dirname(snakemake@output[["xlsx"]])
@@ -173,4 +123,3 @@ write.xlsx(resList,
 # Close redirection of output/messages
 sink(log, type = "output")
 sink(log, type = "message")
-

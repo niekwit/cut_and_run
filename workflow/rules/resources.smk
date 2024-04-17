@@ -2,6 +2,7 @@ rule get_fasta:
     output:
         resources.fasta,
     retries: 3
+    cache: True
     params:
         url=resources.fasta_url,
     log:
@@ -15,9 +16,7 @@ rule get_fasta:
         "../scripts/get_resource.sh"
 
 
-if config["remove_MT_seqs"]:
-    # based on https://bioinformatics.stackexchange.com/questions/16378/remove-from-multi-fasta-by-sequence-id?noredirect=1&lq=1
-    rule index_fasta:
+rule index_fasta:
         input:
             fasta=resources.fasta,
         output:
@@ -30,9 +29,11 @@ if config["remove_MT_seqs"]:
         params:
             extra="",  # optional params string
         wrapper:
-            "v3.3.6/bio/samtools/faidx"
-    
-    
+            f"{wrapper_version}/bio/samtools/faidx"
+
+
+if config["remove_MT_seqs"]:
+    # based on https://bioinformatics.stackexchange.com/questions/16378/remove-from-multi-fasta-by-sequence-id?noredirect=1&lq=1
     rule remove_MT_seq_from_fasta:
         input:
             fasta=resources.fasta,
@@ -134,7 +135,7 @@ rule bowtie2_build:
         ref=fasta(config, resources),
     output:
         multiext(
-            f"resources/bowtie2_index/{genome}/index",
+            f"resources/bowtie2_index/{genome}_{resources.build}/index",
             ".1.bt2",
             ".2.bt2",
             ".3.bt2",
@@ -151,7 +152,7 @@ rule bowtie2_build:
     resources:
         runtime=config["resources"]["index"]["time"],
     wrapper:
-        "v3.3.6/bio/bowtie2/build"
+        f"{wrapper_version}/bio/bowtie2/build"
 
 
 rule chrom_sizes:
@@ -183,32 +184,6 @@ rule create_annotation_file:
     resources: 
         runtime=config["resources"]["plotting"]["time"]
     conda:
-        "../envs/R.yaml"
+        "../envs/diffbind.yaml"
     script:
         "../scripts/create_annotation_file.R"
-
-
-rule compress_resources:
-    input:
-        f=resources.fasta,
-        g=resources.gtf,
-        p="results/plots/pca.pdf",# dummy input to make sure this rule is executed at the end
-    output:
-        f"{resources.fasta}.gz",
-        f"{resources.gtf}.gz",
-    params:
-        pigz_options="",
-    threads: config["resources"]["mapping"]["cpu"]
-    resources: 
-        runtime=config["resources"]["mapping"]["time"]
-    log:
-        "logs/resources/compress_resources.log"
-    conda:
-        "../envs/mapping.yaml"
-    shell:
-        "pigz "
-        "-p {threads} "
-        "{params.pigz_options} "
-        "{input.f} "
-        "> {log} 2>&1"
-

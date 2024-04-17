@@ -6,16 +6,19 @@ from snakemake.utils import min_version
 # set minimum snakemake version
 min_version("7.25.0")
 
+# Wrapper version
+wrapper_version = "v3.8.0"
+
 # load config file and genome
 configfile: "config/config.yaml"
 
 # Check config parameters for invalid values
 check_config()
 
-# load genome
+# Load genome
 genome = config["genome"]
 
-# load resources to be used in rules
+# Load resources to be used in rules
 resources = Resources(genome, 
                       config["ensembl_genome_build"])
 resources_spike_in = Resources(config["spike-in"]["genome"], 
@@ -26,17 +29,17 @@ csv = pd.read_csv("config/samples.csv")
 
 # get wildcard values
 SAMPLES = samples()
-BW_INPUT_DIR = bw_input_dir()
 IP_SAMPLES, CONTROL_SAMPLES = ip_samples()
-CONDITIONS = conditions()
+CONDITIONS = conditions(include_controls=True)
+CONDITIONS_NO_CONTROL = conditions(include_controls=False)
 PEAK_MODE = peak_mode()
+fdr = peak_fdr(PEAK_MODE)
 
 # import rules
 include: "rules/fastqc.smk"
 include: "rules/trimming.smk"
 include: "rules/resources.smk"
 include: "rules/mapping.smk"
-include: "rules/deduplication.smk"
 include: "rules/scale_factors.smk"
 include: "rules/bigwig.smk"
 include: "rules/deeptools.smk"
@@ -47,8 +50,6 @@ include: "rules/peaks.smk"
 rule all:
     input: 
         targets()
-        #expand("results/peaks/narrow/{bw_input_dir}/{ip_sample}/{ip_sample}_peaks.xls", bw_input_dir=BW_INPUT_DIR, ip_sample=IP_SAMPLES)
-        #expand("results/peaks/narrow/{bw_input_dir}/{condition}/{condition}_peaks.xls", bw_input_dir=BW_INPUT_DIR, condition=CONDITIONS)
 
 # Set local rules
 localrules: all

@@ -15,7 +15,7 @@ if config["use_trim_galore"]:
         resources:
             runtime=config["resources"]["trim"]["time"],
         wrapper:
-            "v3.3.6/bio/trim_galore/pe"
+            f"{wrapper_version}/bio/trim_galore/pe"
 else:
     rule cutadapt:
         input:
@@ -33,5 +33,5 @@ else:
         resources:
             runtime=config["resources"]["trim"]["time"],
         wrapper:
-            "v3.3.6/bio/cutadapt/pe"
+            f"{wrapper_version}/bio/cutadapt/pe"
 

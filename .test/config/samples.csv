@@ -1,5 +1,5 @@
-sample,genotype,treatment,factor
-3LW_1,WT,minus6hAPF,EcR
-3LW_2,WT,minus6hAPF,EcR
-6hAPF_1,WT,plus6hAPF,EcR
-6hAPF_2,WT,plus6hAPF,EcR
+sample,genotype,treatment,factor,reference, batch
+3LW_1,WT,minus6hAPF,EcR,yes,1
+3LW_2,WT,minus6hAPF,EcR,yes,1
+6hAPF_1,WT,plus6hAPF,EcR,no,1
+6hAPF_2,WT,plus6hAPF,EcR,no,1

@@ -1,7 +1,7 @@
 rule bowtie2_align:
     input:
         idx=multiext(
-            f"resources/bowtie2_index/{genome}/index",
+            f"resources/bowtie2_index/{genome}_{resources.build}/index",
             ".1.bt2",
             ".2.bt2",
             ".3.bt2",
@@ -30,7 +30,6 @@ rule bowtie2_align:
     # Mapping based on:
     # https://elifesciences.org/articles/21856 Henikoff Cut&Run paper
     # https://github.com/peteskene/py_bowtie_fastq_2_sam/blob/master/py_bowtie_fastq_2_sam.py
-    # and Marta's email
     shell:
         "bowtie2 "
         #"--no-hd " # Suppress SAM header lines (starting with @).
@@ -77,7 +76,7 @@ if config["spike-in"]["apply_spike_in"]:
         resources:
             runtime=config["resources"]["index"]["time"],
         wrapper:
-            "v3.3.6/bio/bowtie2/build"
+            f"{wrapper_version}/bio/bowtie2/build"
 
 
     rule bowtie2_align_spike_in:
@@ -136,18 +135,15 @@ rule bam_sort:
     log:
         "logs/bam_sort/{sample}.log",
     wrapper:
-        "v3.3.6/bio/samtools/sort"
+        f"{wrapper_version}/bio/samtools/sort"
 
-"""
-if config["remove_blacklisted_regions"]:
-"""
 
 rule remove_blacklisted_regions:
     input:
         left="results/mapped/sorted/{sample}.bam",
         right=resources.ensembl_blacklist,
     output:
-        "results/mapped/bl_removed/{sample}.bam",
+        "results/mapped/{sample}.bl.bam",
     params:
         extra="-v ", # Only keeps regions in bam file that are not in bed file
     threads: config["resources"]["mapping"]["cpu"]
@@ -156,14 +152,14 @@ rule remove_blacklisted_regions:
     log:
         "logs/bedtools_bl/{sample}.log",
     wrapper:
-        "v3.3.6/bio/bedtools/intersect"
+        f"{wrapper_version}/bio/bedtools/intersect"
 
 
 rule bam_index:
     input:
-        "results/mapped/bl_removed/{sample}.bam",
+        "results/mapped/{sample}.bl.bam",
     output:
-        "results/mapped/bl_removed/{sample}.bam.bai",
+        "results/mapped/{sample}.bl.bam.bai",
     params:
         extra="",  # Optional params string
     threads: config["resources"]["samtools"]["cpu"]
@@ -172,6 +168,6 @@ rule bam_index:
     log:
         "logs/samtools_index/{sample}.log",
     wrapper:
-        "v3.3.6/bio/samtools/index"
+        f"{wrapper_version}/bio/samtools/index"
 
 
