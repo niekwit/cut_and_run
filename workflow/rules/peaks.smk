@@ -2,7 +2,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
     if not config["peak_calling"]["macs2"]["broad"]:
         logger.info("MAC2S narrow peak calling selected...")
         if control_available():
-            rule call_peaks_macs2_narrow:
+            rule macs2_narrow:
                 input: 
                     bam="results/mapped/{ip_sample}.bl.bam",
                     bai="results/mapped/{ip_sample}.bl.bam.bai",
@@ -32,7 +32,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../scripts/macs2.py"
             
 
-            rule call_peaks_macs2_narrow_replicates:
+            rule macs2_narrow_replicates:
                 input:
                     bams=expand("results/mapped/{ip_sample}.bl.bam", ip_sample=IP_SAMPLES),
                     bais=expand("results/mapped/{ip_sample}.bl.bam.bai", ip_sample=IP_SAMPLES),
@@ -60,7 +60,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 script:
                     "../scripts/macs2_replicates.py"
         else:
-            rule call_peaks_macs2_narrow:
+            rule macs2_narrow:
                 input: 
                     bam="results/mapped/{ip_sample}.bl.bam",
                     bai="results/mapped/{ip_sample}.bl.bam.bai",
@@ -87,7 +87,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 script:
                     "../scripts/macs2.py"
 
-            rule call_peaks_macs2_narrow_replicates:
+            rule macs2_narrow_replicates:
                 input:
                     bams=expand("results/mapped/{ip_sample}.bam", ip_sample=IP_SAMPLES),
                     bais=expand("results/mapped/{ip_sample}.bam.bai", ip_sample=IP_SAMPLES),
@@ -134,7 +134,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
         logger.info("MAC2S broad peak calling selected...")
         if control_available():
             logger.info("Control samples found...")
-            rule call_peaks_macs2_broad:
+            rule macs2_broad:
                 input: 
                     bam="results/mapped/{ip_sample}.bl.bam",
                     bai="results/mapped/{ip_sample}.bl.bam.bai",
@@ -164,7 +164,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../scripts/macs2.py"
 
             
-            rule call_peaks_macs2_broad_replicates:
+            rule macs2_broad_replicates:
                 input:
                     bams=expand("results/mapped/{ip_sample}.bl.bam", ip_sample=IP_SAMPLES),
                     bais=expand("results/mapped/{ip_sample}.bl.bam.bai", ip_sample=IP_SAMPLES),
@@ -194,7 +194,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../scripts/macs2_replicates.py"
 
         else:
-            rule call_peaks_macs2_broad:
+            rule macs2_broad:
                 input: 
                     bam="results/mapped/{ip_sample}.bl.bam",
                     bai="results/mapped/{ip_sample}.bl.bam.bai",
@@ -221,7 +221,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 script:
                     "../scripts/macs2.py"
 
-            rule call_peaks_macs2_broad_replicates:
+            rule macs2_broad_replicates:
                 input:
                     bams=expand("results/mapped/{ip_sample}.bl.bam", ip_sample=IP_SAMPLES),
                     bais=expand("results/mapped/{ip_sample}.bl.bam.bai", ip_sample=IP_SAMPLES),
@@ -293,11 +293,11 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 **diffbind_input(wildcards)
             output:
                 dba=f"results/diffbind/{PEAK_MODE}/fdr{fdr}/dba.RData",
-                pca=f"results/diffbind/{PEAK_MODE}/fdr{fdr}/PCA.pdf",
-                sc=f"results/diffbind/{PEAK_MODE}/fdr{fdr}/SampleCorrelation.pdf",
-                pp=f"results/diffbind/{PEAK_MODE}/fdr{fdr}/ProfilePLot.pdf",
+                pca=f"results/plots/diffbind/{PEAK_MODE}/fdr{fdr}/PCA.pdf",
+                sc=f"results/plots/diffbind/{PEAK_MODE}/fdr{fdr}/SampleCorrelation.pdf",
+                pp=f"results/plots/diffbind/{PEAK_MODE}/fdr{fdr}/ProfilePLot.pdf",
                 _dir=directory(f"results/diffbind/{PEAK_MODE}/fdr{fdr}/"),
-                sh=f"results/peaks/diffbind/{PEAK_MODE}/fdr{fdr}/samplesheet.csv",
+                sh=f"results/diffbind/{PEAK_MODE}/fdr{fdr}/samplesheet.csv",
             params:
                 control=control_available(),
                 genome=genome,
