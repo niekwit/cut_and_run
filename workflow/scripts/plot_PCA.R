@@ -11,39 +11,35 @@ library(ggrepel)
 library(reshape2)
 library(scales)
 
-
 #### PCA plot ####
-# load PCA data 
-data <- read.delim(snakemake@input[[1]], 
+# Load PCA data
+data <- read.delim(snakemake@input[[1]],
                    header = TRUE,
                    skip = 1)
 
-#load sample information (replace any - with .)
-sample_info <- read.csv("config/samples.csv", header = TRUE) %>%
-  mutate( across(
-    .cols = everything(),
-    ~str_replace( ., "-", "." )
-  ) )
+# Load sample information (replace any - with .)
+sample_info <- read.csv("config/samples.csv", header = TRUE)
 
-#get unique genotypes, factors and treatments
-genotypes <- unique(sample_info$genotype)
-factors <- unique(sample_info$factor)
-treatments <- unique(sample_info$treatment)
+# Unique sample conditions
+samples <- colnames(data)[2:(ncol(data) - 1)]
+samples <- unique(str_replace(samples, "_[0-9]+$", ""))
 
-# set colours (genotypes)
-if (length(genotypes) < 3) {
-  colours <- c("#1B9E77","#D95F02")
-} else {
-  colours <- brewer.pal(length(genotypes), "Dark2")
+# Remove prepended X from sample names (happens if they start with a number)
+samples <- str_replace(samples, "^X", "")
+
+# Set colours for plotting
+if (length(samples) == 1) {
+  colours <- "#1B9E77"
+} else if (length(samples) == 2) {
+  colours <- c("#1B9E77", "#D95F02")
+} else if (length(samples) < 9) {
+  colours <- brewer.pal(length(samples), "Dark2")
+} else if (length(samples) < 13) {
+  colours <- brewer.pal(length(samples), "Set3")
 }
+names(colours) <- samples
 
-# set shapes (treatments)
-shapes <- c(21, 22, 24, 23, 25)[1:length(treatments)]
-
-# set sizes (factors)
-sizes <- c(8, 12, 16, 20, 24)[1:length(factors)]
-
-# keep only components 1 and 2, transform and add sample information
+# Keep only components 1 and 2, transform and add sample information
 df <- data[1:2,] %>%
   dplyr::select(-c("Component","Eigenvalue")) %>%
   t() %>%
@@ -53,79 +49,79 @@ df <- data[1:2,] %>%
          PC2 = 2) %>%
   left_join(sample_info, by = "sample")
 
-# calculate variance explained for each PC
+# Calculate variance explained for each PC
 PC1_var <- round((data$Eigenvalue[1] / sum(data$Eigenvalue)) * 100, 1)
 PC2_var <- round((data$Eigenvalue[2] / sum(data$Eigenvalue)) * 100, 1)
 
-# create PCA plot
-p <- ggplot(df, 
-            mapping = aes(x = PC1, 
+# Create PCA plot
+p <- ggplot(df,
+            mapping = aes(x = PC1,
                           y = PC2,
-                          fill = genotype, 
-                          shape = treatment, 
-                          size = factor)) +
-  geom_point() +
-  geom_label_repel(data = df , 
+                          colour = colour)) +
+  geom_point(shape = 19,
+             size = 5) +
+  geom_label_repel(data = df,
                    aes(label = sample,
-                       fill = NULL), 
-                   size = 5, 
-                   nudge_x = 0.5, 
+                       fill = NULL),
+                   size = 5,
+                   nudge_x = 0.5,
                    nudge_y = 0.5) +
-  scale_fill_manual(values = colours) +
-  scale_shape_manual(values = shapes) +
-  scale_size_manual(values = sizes) +
   theme_cowplot(16) +
-  labs(x = paste0("PC1: ", PC1_var, "% variance"), 
-       y = paste0("PC2: ", PC2_var, "% variance"), 
-       Fill = "Genotype", 
-       shape = "Treatment", 
-       size = "Factor") 
+  labs(x = paste0("PC1: ", PC1_var, "% variance"),
+       y = paste0("PC2: ", PC2_var, "% variance")) +
+  theme(legend.position = "none")
 
-# save plot
-ggsave(snakemake@output[["pca"]], p)
-
+# Save plot
+ggsave(snakemake@output[["pca"]],
+       p,
+       height = 4,
+       width = 6)
 
 #### Scree plot ####
-# scale factor for utilising whole second y-axis range
+# Scale factor for utilising whole second y-axis range
 # https://stackoverflow.com/questions/65559901/add-a-second-y-axis-to-ggplot
 scalefactor <- max(data$Eigenvalue) / 100
 
-# prepare data for scree plot
+# Prepare data for scree plot
 df <- data %>%
   dplyr::select(c("Component","Eigenvalue")) %>%
   mutate(Component = paste0("PC", Component)) %>%
   mutate(cumulative_variance = (cumsum(Eigenvalue) / sum(Eigenvalue) * 100 * scalefactor))
 
-# create scree plot
+# Create scree plot
 s <- ggplot(df, aes(Component, cumulative_variance)) +
   geom_bar(aes(Component, Eigenvalue),
-           stat="identity",
+           stat = "identity",
            colour = "black",
            fill = "aquamarine4") +
-  geom_line(mapping = aes(x = Component, 
+  geom_line(mapping = aes(x = Component,
                           y = cumulative_variance,
                           group = 1),
             colour = "red",
             linewidth = 1) +
-  geom_point(mapping = aes(x = Component, 
-                          y = cumulative_variance),
-            colour = "red",
-            fill = "white",
-            shape = 21,
-            size = 6,
-            stroke = 1.5) +
-  theme_cowplot(16) +
-  scale_y_continuous(sec.axis = sec_axis(trans = ~ .x / scalefactor,
+  geom_point(mapping = aes(x = Component,
+                           y = cumulative_variance),
+             colour = "red",
+             fill = "white",
+             shape = 21,
+             size = 5,
+             stroke = 1.5) +
+  theme_cowplot(15) +
+  theme(axis.title.y.right = element_text(color = "red"),
+        axis.text.y.right = element_text(color = "red")) +
+  scale_y_continuous(sec.axis = sec_axis(transform = ~ .x / scalefactor,
                                          breaks = seq(0, 100, 25),
                                          name = "Cumulative variance explained (%)"),
                      expand = expansion(mult = c(0, .05))) +
-  labs(x = "Principal component", 
+  labs(x = "Principal component",
        y = "Eigenvalue")
 
-# save plot
-ggsave(snakemake@output[["scree"]], s)
+# Save plot
+ggsave(snakemake@output[["scree"]],
+       s,
+       height = 4,
+       width = 6)
 
-# close redirection of output/messages
+# Close redirection of output/messages
 sink(log, type = "output")
 sink(log, type = "message")
-
