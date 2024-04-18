@@ -1,4 +1,4 @@
-# redirect R output to log
+# Redirect R output to log
 log <- file(snakemake@log[[1]], open="wt")
 sink(log, type = "output")
 sink(log, type = "message")
@@ -15,9 +15,10 @@ library(scales)
 # Load PCA data
 data <- read.delim(snakemake@input[[1]],
                    header = TRUE,
-                   skip = 1)
+                   skip = 1) 
+colnames(data) <- str_replace(colnames(data), "^X", "")
 
-# Load sample information (replace any - with .)
+# Load sample information
 sample_info <- read.csv("config/samples.csv", header = TRUE)
 
 # Unique sample conditions
@@ -40,14 +41,17 @@ if (length(samples) == 1) {
 names(colours) <- samples
 
 # Keep only components 1 and 2, transform and add sample information
-df <- data[1:2,] %>%
-  dplyr::select(-c("Component","Eigenvalue")) %>%
+df <- data[1:2, ] %>%
+  dplyr::select(-c("Component", "Eigenvalue")) %>%
   t() %>%
   as.data.frame() %>%
   mutate(sample = rownames(.)) %>%
   rename(PC1 = 1,
          PC2 = 2) %>%
-  left_join(sample_info, by = "sample")
+  mutate(sample_condition = str_replace(sample,
+                                        "_[0-9]+$",
+                                        ""),
+         colour = colours[sample_condition])
 
 # Calculate variance explained for each PC
 PC1_var <- round((data$Eigenvalue[1] / sum(data$Eigenvalue)) * 100, 1)
