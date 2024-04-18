@@ -46,25 +46,25 @@ for (i in seq_along(log.files)) {
   read_log <- function(pattern){
     suppressWarnings({
       aligned_number <- as.numeric(str_split_1(str_trim(log[grep(pattern, log)],
-                                                           side = "left"),
-                                                  " "))[1]
+                                                        side = "left"),
+                                               " "))[1]
       aligned_perc <- str_split_1(str_trim(log[grep(pattern, log)],
-                                              side = "left"),
-                                     " ")[2]
+                                           side = "left"),
+                                  " ")[2]
       aligned_perc <- as.numeric(sub("(", "", sub("%)", "", aligned_perc), fixed = TRUE))
-    
+
       return(c(aligned_number, aligned_perc))
     })
   }
   aligned_zero_number <- read_log("aligned concordantly 0 times")[1]
   aligned_zero_perc <- read_log("aligned concordantly 0 times")[2]
-  
+
   aligned_one_number <- read_log("aligned concordantly exactly 1 time")[1]
   aligned_one_perc <- read_log("aligned concordantly exactly 1 time")[2]
-  
+
   aligned_multiple_number <- read_log("aligned concordantly >1 times")[1]
   aligned_multiple_perc <- read_log("aligned concordantly >1 times")[2]
-  
+
   # Add data to data frames
   df.perc <- df.perc %>%
     add_row(sample = sample,
@@ -72,7 +72,7 @@ for (i in seq_along(log.files)) {
             aligned_multiple_perc = aligned_multiple_perc,
             aligned_one_perc = aligned_one_perc,
             aligned_zero_perc = aligned_zero_perc)
-  
+
   df.number <- df.number %>%
     add_row(sample = sample,
             total_reads = total_reads,
@@ -86,10 +86,12 @@ df.perc <- melt(df.perc, id.vars = "sample")
 df.number <- melt(df.number, id.vars = "sample")
 
 # Plot and save alignment data
-plot_data <- function(df, title, y.axis, outfile){
+plot_data <- function(df, title, y.axis, outfile) {
   dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
-  p <- ggplot(df, aes(x = sample, y = value, fill = variable)) +
+  p <- ggplot(df, aes(x = sample, 
+                      y = value, 
+                      fill = variable)) +
     geom_bar(stat = "identity",
              position = "dodge",
              colour = "black") +
@@ -98,7 +100,11 @@ plot_data <- function(df, title, y.axis, outfile){
           legend.position = "bottom",
           legend.justification = "center",
           legend.text = element_text(size = 12),
-          plot.margin = margin(t = 0.5, r = 1.5, b = 0.5, l = 0.5, unit = "cm")) +
+          plot.margin = margin(t = 0.5,
+                               r = 1.5,
+                               b = 0.5,
+                               l = 0.5,
+                               unit = "cm")) +
     labs(title = title,
          x = NULL,
          y = y.axis, #"Number of reads aligned",
@@ -114,9 +120,16 @@ plot_data <- function(df, title, y.axis, outfile){
                                  "Aligned > 1 time",
                                  "Aligned 1 time",
                                  "Did not align"))
-  
   # Save to file
-  ggsave(outfile, p, height = 8, width = length(log.files) * 2)
+  if (length(log.files) < 10){
+    width <- length(log.files)
+  } else {
+    width <- length(log.files) / 2
+  }
+  ggsave(outfile,
+         p,
+         height = 6,
+         width = width)
 }
 
 plot_data(df.perc, "Concordant alignment rates (Bowtie2)", "Percentage of total reads", snakemake@output["rates"][[1]])
