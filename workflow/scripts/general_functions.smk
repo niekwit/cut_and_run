@@ -289,60 +289,19 @@ def macs2_mode():
     else:
         return "narrow"
 
-'''
-def macs2_input(wildcards):
-    """
-    Returns named input files as dictionary for call_peaks_macs2 rule.
-    """
-    # Base input
-    _dict = {
-        "ip_bam": "results/mapped/{wildcards.ip_sample}.bam".format(wildcards=wildcards),
-        "bai": "results/mapped/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
-        "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
-    }
-    # Add control sample if available
-    if control_available():
-        _dict["control_bam"] = "results/mapped/{wildcards.control_sample}.bam".format(wildcards=wildcards)
-        _dict["control_bai"] = "results/mapped/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards)
-
-    return _dict
-
-
-def macs2_input_replicates(wildcards):
-    """
-    Returns named input files as dictionary for call_peaks_macs2 rule.
-    """
-    # Base input
-    _dict = {
-        "ip_bams": expand("results/mapped/{wildcards.ip_sample}.bam".format(wildcards=wildcards)),
-        "bais": expand("results/mapped/{wildcards.ip_sample}.bam.bai".format(wildcards=wildcards),
-        "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
-    }
-    # Add control sample if available
-    if control_available():
-        _dict["control_bam"] = expand("results/mapped/{wildcards.control_sample}.bam".format(wildcards=wildcards))
-        _dict["control_bai"] = expand("results/mapped/{wildcards.control_sample}.bam.bai".format(wildcards=wildcards))
-
-    return _dict
-'''
 
 def run_diffbind():
     """
-    Returns True if diffbind rule should be run, False otherwise
+    Returns True if diffbind rule should be run
     """
-    references = list(set(csv["reference"]))
-    if len(references) == 1:
-        # Check if value is "no"
-        if references[0].lower() == "no":
-            return False
-        else:
+    if config["peak_calling"]["macs2"]["use_macs2"]:
+        references = list(set(csv["reference"]))
+        if len(references) > 1 and "yes" in references:
             return True
+        else:
+            False
     else:
-        # Check if any value is "yes"
-        if "yes" in references:
-            return True
-        else:
-            return False
+        False
 
 
 def diffbind_input(wildcards):
