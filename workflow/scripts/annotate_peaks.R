@@ -17,10 +17,12 @@ bed.file <- snakemake@output[["bed"]]
 gtf <- snakemake@params[["gtf"]]
 
 # Determine how many lines to skip in xls file (comment lines)
-if (peak.mode == "narrow") {
+if (peak.mode == "macs2_narrow") {
   skip <- 21
-} else if (peak.mode == "broad") {
+} else if (peak.mode == "macs2_broad") {
   skip <- 22
+} else {
+  stop("Invalid peak mode found...")
 }
 
 # Load xls file and convert to bed
