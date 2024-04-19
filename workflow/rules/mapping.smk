@@ -32,7 +32,6 @@ rule bowtie2_align:
     # https://github.com/peteskene/py_bowtie_fastq_2_sam/blob/master/py_bowtie_fastq_2_sam.py
     shell:
         "bowtie2 "
-        #"--no-hd " # Suppress SAM header lines (starting with @).
         "--local " # read characters from one or both ends of the alignment might be trimmed to maximize the alignment score
         "--very-sensitive-local "
         "--soft-clipped-unmapped-tlen " # Consider soft-clipped bases unmapped when calculating TLEN (observed Template LENgth, is SAM field)
@@ -72,6 +71,7 @@ if config["spike-in"]["apply_spike_in"]:
             "logs/bowtie2_build_spike_in/build.log",
         params:
             extra="",  # optional parameters
+        cache: True
         threads: config["resources"]["index"]["cpu"]
         resources:
             runtime=config["resources"]["index"]["time"],
@@ -106,7 +106,6 @@ if config["spike-in"]["apply_spike_in"]:
             "../envs/mapping.yaml",
         shell:
             "bowtie2 "
-            #" --no-hd " # Suppress SAM header lines (starting with @).
             "--local " # read characters from one or both ends of the alignment might be trimmed to maximize the alignment score
             "--very-sensitive-local "
             "--no-unal " # Suppress SAM records for reads that failed to align
@@ -169,5 +168,3 @@ rule bam_index:
         "logs/samtools_index/{sample}.log",
     wrapper:
         f"{wrapper_version}/bio/samtools/index"
-
-
