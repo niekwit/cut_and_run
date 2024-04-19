@@ -16,6 +16,9 @@ gtf <- snakemake@input[["gtf"]]
 # Load annotation database
 txdb <- makeTxDbFromGFF(gtf)
 
+# Load sample information
+sample_info <- read.csv("config/samples.csv", header = TRUE)
+
 # Add sample names to bed files
 # Check which bed files are provided
 if (any(grepl("\\.narrowPeak$", bed.files)) == TRUE) {
@@ -24,6 +27,12 @@ if (any(grepl("\\.narrowPeak$", bed.files)) == TRUE) {
   samples <- sub(".*\\/([^\\/]+)\\_peaks.broadPeak", "\\1", bed.files)
 }
 names(bed.files) <- samples
+
+# Get sample condition from sample_info
+conditions <- unique(str_replace(sample_info$sample, "_[0-9]+$", ""))
+
+# Order named bed.files so that they match the order of conditions (match to names)
+bed.files <- bed.files[conditions]
 
 # Annotate bed files
 peakAnnoList <- lapply(bed.files,
