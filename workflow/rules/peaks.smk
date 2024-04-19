@@ -267,11 +267,11 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
     
     rule annotate_peaks:
         input:
-            xls=f"results/{peak_mode}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls",
+            xls=f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls",
             adb=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
         output:
-            bed=f"results/{peak_mode}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.bed",
-            txt=f"results/{peak_mode}/fdr{fdr}/{{conditions}}/{{conditions}}_annotated.peaks.txt",
+            bed=f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.bed",
+            txt=f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_annotated.peaks.txt",
         params:
             pm=PEAK_MODE,
             gtf=resources.gtf,
@@ -280,7 +280,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
         resources:
             runtime=config["resources"]["deeptools"]["time"]
         log:
-            f"logs/annotate_peaks/{peak_mode}/fdr{fdr}/{{conditions}}.log"
+            f"logs/annotate_peaks/{PEAK_MODE}/fdr{fdr}/{{conditions}}.log"
         conda:
             "../envs/diffbind.yaml"
         script:
