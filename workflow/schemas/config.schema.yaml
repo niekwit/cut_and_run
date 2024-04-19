@@ -1,0 +1,347 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: Snakemake configuration file
+
+type: object
+
+properties:
+  genome:
+    type: string
+    enum: ["hg38", "hg19", "mm10", "mm9", "dm3", "dm6"]
+    description: Ensembl genome
+  
+  ensembl_genome_build:
+    type: integer
+    minimum: 1
+    description: Gencode genome build
+  
+  spike_in:
+    type: object
+    properties:
+      apply_spike_in:
+        type: boolean
+      genome:
+        type: string
+      ensembl_genome_build:
+        type: integer
+      normalisation:
+        type: string
+        enum: ["divide", "multiply"]
+
+  use_trim_galore:
+    type: boolean
+    description: Use Trim_galore instead of cutadapt
+
+  cutadapt:
+    type: object
+    properties:
+      a:
+        type: string
+      A:
+        type: string
+      extra:
+        type: string
+      min_length:
+        type: integer
+        minimum: 1
+    required:
+      - a
+      - A
+      - extra
+      - min_length
+
+  remove_MT_seqs:
+    type: boolean
+    description: Create bowtie2 index without MT sequences
+
+  bowtie2:
+    type: object
+    properties:
+      min_length:
+        type: integer
+        minimum: 1
+      max_length:
+        type: integer
+        minimum: 1
+      MAPQ_cutoff:
+        type: integer
+        minimum: 1
+      extra:
+        type: string
+      samtools_extra:
+        type: string
+    required:
+      - min_length
+      - max_length
+      - MAPQ_cutoff
+      - extra
+      - samtools_extra
+
+  deeptools:
+    type: object
+    properties:
+      bigwig:
+        type: object
+        properties:
+          normalisation:
+            type: string
+            enum: ["RPKM", "CPM", "BPM", "RPGC", "None"]
+          binsize:
+            type: integer
+            minimum: 1
+          extra:
+            type: string
+        required:
+          - normalisation
+          - binsize
+          - extra
+
+      matrix:
+        type: object
+        properties:
+          mode:
+            type: string
+            enum: ["scale-regions", "reference-point"]
+          referencePoint:
+            type: string
+            enum: ["TSS", "TES", "center"]
+          regionBodyLength:
+            type: integer
+            minimum: 1
+          upstream:
+            type: integer
+            minimum: 1
+          downstream:
+            type: integer
+            minimum: 1
+          binSize:
+            type: integer
+            minimum: 1
+          averageTypeBins:
+            type: string
+            enum: ["mean", "median", "max", "min", "sum", "region_length"]
+          regionsFileName:
+            type: string
+          no_whole_genome:
+            type: boolean
+          extra:
+            type: string
+        required:
+          - mode
+          - referencePoint
+          - regionBodyLength
+          - upstream
+          - downstream
+          - binSize
+          - averageTypeBins
+          - regionsFileName
+          - no_whole_genome
+          - extra
+
+      plotHeatmap:
+        type: object
+        properties:
+          interpolationMethod:
+            type: string
+          plotType:
+            type: string
+            enum: ["lines", "fill", "se", "std"]
+          colorMap:
+            type: string
+          alpha:
+            type: number
+            minimum: 0
+            maximum: 1
+          extra:
+            type: string
+        required:
+          - interpolationMethod
+          - plotType
+          - colorMap
+          - alpha
+          - extra
+
+  peak_calling:
+    type: object
+    properties:
+      macs2:
+        type: object
+        properties:
+          use_macs2:
+            type: boolean
+          broad:
+            type: boolean
+          qvalue:
+            type: number
+            minimum: 0
+            maximum: 1
+          broad_cutoff:
+            type: number
+            minimum: 0
+            maximum: 1
+          extra:
+            type: string
+        required:
+          - use_macs2
+          - broad
+          - qvalue
+          - broad_cutoff
+          - extra
+
+      htseq_count:
+        type: object
+        properties:
+          use_htseq_count:
+            type: boolean
+          mode:
+            type: string
+            enum: ["union", "intersection-strict", "intersection-nonempty"]
+          feature:
+            type: string
+          extra:
+            type: string
+          DESeq2:
+            type: object
+            properties:
+              cumulative_filter_out:
+                type: integer
+                minimum: 1
+              smallest_group:
+                type: integer
+                minimum: 1
+              alpha:
+                type: number
+                minimum: 0
+                maximum: 1
+              fc:
+                type: number
+                minimum: 0
+                description: log2 fold change cut off for volcano plots
+            required:
+              - cumulative_filter_out
+              - smallest_group
+              - alpha
+              - fc
+        required:
+          - use_htseq_count
+          - mode
+          - feature
+          - extra
+          - DESeq2
+
+  resources:
+    type: object
+    properties:
+      trim:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      fastqc:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      index:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      mapping:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      samtools:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      deeptools:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      macs2:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      deseq2:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      diffbind:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+      plotting:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+    required:
+      - trim
+      - fastqc
+      - index
+      - mapping
+      - samtools
+      - deeptools
+      - macs2
+      - deseq2
+      - diffbind
+      - plotting
+
+required:
+  - genome
+  - ensembl_genome_build
+  - spike_in
+  - use_trim_galore
+  - cutadapt
+  - remove_MT_seqs
+  - bowtie2
+  - deeptools
+  - peak_calling
+  - resources

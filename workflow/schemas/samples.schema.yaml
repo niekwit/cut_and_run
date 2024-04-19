@@ -1,0 +1,30 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: Samples configuration file
+properties:
+  sample:
+    type: string
+    pattern: "^[\w\d_]+_[\d]+$"
+    description: sample name/identifier
+  genotype:
+    type: string
+    pattern: "^[\w\d_]+$"
+    description: sample genotype
+  treatment:
+    type: string
+    pattern: "^[\w\d_]+$"
+    description: sample treatment
+  control:
+    type: string
+    pattern: "^[\w\d_]+_[\d]+$"
+    description: control sample name/identifier
+  reference:
+    type: string
+    enum: ["yes", "no"]
+    description: Is this sample a reference sample (yes/no)?
+
+required:
+  - sample
+  - genotype
+  - treatment
+  - reference
