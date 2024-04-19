@@ -286,7 +286,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
         script:
             "../scripts/annotate_peaks.R"
 
-    '''
+    
     if run_diffbind():
         rule diffbind:
             input:
@@ -311,11 +311,8 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 "logs/diffbind/{peak_mode}/diffbind.log"
             script:
                 "../scripts/diffbind.R"
-    '''
-    
-  
 
-elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
+if config["peak_calling"]["htseq_count"]["use_htseq_count"]:
     rule call_peaks_htseq_count:
         input:
             bam="results/mapped/{sample}.bl.bam",
