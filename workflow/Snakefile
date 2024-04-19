@@ -1,19 +1,21 @@
 include: "scripts/general_functions.smk"
 import datetime
 from scripts.resources import Resources
-from snakemake.utils import min_version
+from snakemake.utils import min_version, validate
 
-# set minimum snakemake version
+# Set minimum snakemake version
 min_version("7.25.0")
 
 # Wrapper version
 wrapper_version = "v3.8.0"
 
-# load config file and genome
+# Load config file and genome
 configfile: "config/config.yaml"
+validate(config, "schemas/config.schema.yaml")
 
-# Check config parameters for invalid values
-check_config()
+# Validate samples.csv
+#samples_csv = pd.read_csv("config/samples.csv")
+#validate(samples_csv, "schemas/samples.schema.yaml")
 
 # Load genome
 genome = config["genome"]
@@ -21,8 +23,8 @@ genome = config["genome"]
 # Load resources to be used in rules
 resources = Resources(genome, 
                       config["ensembl_genome_build"])
-resources_spike_in = Resources(config["spike-in"]["genome"], 
-                               config["spike-in"]["ensembl_genome_build"])
+resources_spike_in = Resources(config["spike_in"]["genome"], 
+                               config["spike_in"]["ensembl_genome_build"])
 
 # Load sample information
 csv = pd.read_csv("config/samples.csv")

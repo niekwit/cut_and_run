@@ -2,7 +2,7 @@
 # Use Python style for boolean values (True/False)
 genome: dm6
 ensembl_genome_build: 110
-spike-in:
+spike_in:
   apply_spike_in: False
   genome: MG1655
   ensembl_genome_build: 57

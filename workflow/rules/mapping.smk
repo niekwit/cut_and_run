@@ -53,7 +53,7 @@ rule bowtie2_align:
         "-bhS > {output} "
 
 
-if config["spike-in"]["apply_spike_in"]:
+if config["spike_in"]["apply_spike_in"]:
     rule bowtie2_build_spike_in:
         input:
             ref=resources_spike_in.fasta
