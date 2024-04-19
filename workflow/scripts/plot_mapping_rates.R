@@ -1,4 +1,4 @@
-# redirect R output to log
+# Redirect R output to log
 slog <- file(snakemake@log[[1]], open = "wt")
 sink(slog, type = "output")
 sink(slog, type = "message")
@@ -107,10 +107,10 @@ plot_data <- function(df, title, y.axis, outfile) {
                                unit = "cm")) +
     labs(title = title,
          x = NULL,
-         y = y.axis, #"Number of reads aligned",
+         y = y.axis,
          fill = NULL) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.1)),
-                       limits = c(0, 100)) +
+                       limits = c(0, ifelse(y.axis == "Number of reads", max(df$value), 100))) +
     scale_x_discrete(guide = guide_axis(angle = 45)) +
     scale_fill_manual(values = c("darkblue",
                                  "grey40",
