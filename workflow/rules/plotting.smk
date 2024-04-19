@@ -16,20 +16,20 @@ rule plot_mapping_rates:
         "../scripts/plot_mapping_rates.R"
 
 
-rule plot_rsequence_lengths:
+rule plot_fragment_lengths:
     input:
-        txt="results/read_lengths/{sample}.txt",
+        tsv="results/qc/fragment_lengths_raw.tsv",
     output:
-        pdf="results/read_lengths/{sample}.pdf",
+        pdf="results/plots/qc/bam_fragment_lengths.pdf",
     threads: config["resources"]["samtools"]["cpu"],
     resources:
         runtime=config["resources"]["samtools"]["time"],
     log:
-        "logs/plots/read_lengths/{sample}.log",
+        "logs/plots/bam_fragment_lengths.log",
     conda:
         "../envs/R.yaml",
     script:
-        "../scripts/plot_sequence_lengths.R"
+        "../scripts/plot_bam_fragment_lengths.R"
 
 
 rule plot_PCA:
