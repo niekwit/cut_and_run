@@ -70,41 +70,6 @@ def targets():
     return TARGETS
 
 
-def check_config():
-    """
-    Checks if config file values are valid entries
-    REPLACE WITH SCHEMA VALIDATION
-    """
-    # List to store parameters with wrong value
-    wrong = []
-    
-    # Check boolean values
-    check = {
-        "apply_spike_in": config["spike-in"]["apply_spike_in"],
-        "remove_MT_seqs": config["remove_MT_seqs"],
-    }
-    for key, value in check.items():
-        if not isinstance(value, bool):
-            wrong.append(key)
-    
-    # Check numerical values
-    check = {
-        "cutadapt_min_length": config["cutadapt"]["min_length"],
-        "bowtie2_min_length": config["bowtie2"]["min_length"],
-        "bowtie2_max_length": config["bowtie2"]["max_length"],
-        "bowtie2_min_mapq": config["bowtie2"]["MAPQ_cutoff"],
-        "bigwig_binsize": config["deeptools"]["bigwig"]["binsize"],
-    }
-    for key, value in check.items():
-        if not isinstance(value, int):
-            wrong.append(key)
-
-    # Raise error if any invalid values were found
-    if len(wrong) != 0:
-        wrong = "\n".join(wrong)
-        raise ValueError(f"ERROR: following config parameters have invalid values:\n{wrong}")
-
-
 def samples():
     """
     Checks sample names/files and returns sample wildcard values for Snakemake
