@@ -1,4 +1,4 @@
-if config["spike-in"]["apply_spike_in"]:
+if config["spike_in"]["apply_spike_in"]:
     rule calculate_scale_factors:
         input:
             bam=expand("results/mapped/{sample}.bl.bam", sample=SAMPLES),

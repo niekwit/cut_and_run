@@ -8,7 +8,7 @@ rule bigwig:
         binsize=config["deeptools"]["bigwig"]["binsize"],
         norm=config["deeptools"]["bigwig"]["normalisation"],
         extra=config["deeptools"]["bigwig"]["extra"],
-        apply_spike_in=config["spike-in"]["apply_spike_in"],
+        apply_spike_in=config["spike_in"]["apply_spike_in"],
         remove_MT_seqs=config["remove_MT_seqs"],
     threads: config["resources"]["deeptools"]["cpu"]
     resources:

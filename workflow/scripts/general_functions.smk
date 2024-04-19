@@ -197,7 +197,7 @@ def bw_input(wildcards):
         "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
     # Add additional input files depending on config file
-    if config["spike-in"]["apply_spike_in"]:
+    if config["spike_in"]["apply_spike_in"]:
         _dict["sf"] = "results/scale_factors/scale_factors.csv"
     if config["remove_MT_seqs"]:
         _dict["mgs"] = f"resources/{genome}_mt_genome_size.txt"

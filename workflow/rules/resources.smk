@@ -73,7 +73,7 @@ if config["remove_MT_seqs"]:
             "grep '^{params.mt}' {input} | awk '{{print $2}}' > {output} 2> {log} "
 
 
-if config["spike-in"]["apply_spike_in"]:
+if config["spike_in"]["apply_spike_in"]:
     use rule get_fasta as get_spike_in_fasta with:
         output:
             resources_spike_in.fasta,
