@@ -13,11 +13,9 @@ def targets():
         "results/plots/qc/mapping_read_number.pdf",
         "results/plots/qc/PCA.pdf",
         "results/plots/qc/scree.pdf",
-        "results/plots/qc/fragment_lengths.pdf",
-        "results/qc/fragment_lengths.tsv",
+        "results/plots/qc/bam_fragment_lengths.pdf",
         "results/plots/heatmap.pdf",
         "results/deeptools/heatmap_matrix.gz",
-        "results/qc/pre_trim/multiqc.html",
     ]
 
     ### Add conditional targets
@@ -59,6 +57,10 @@ def targets():
                     expand(f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak", ip_sample=IP_SAMPLES),
                     expand(f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed", ip_sample=IP_SAMPLES),
                 ])
+        TARGETS.extend([
+            expand(f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.bed", conditions= CONDITIONS_NO_CONTROL),
+            expand(f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_annotated.peaks.txt", conditions= CONDITIONS_NO_CONTROL),
+        ])
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend([
             "results/htseq_count/DESeq2/differential_peaks.xlsx",
@@ -226,7 +228,7 @@ def bw_input(wildcards):
     _dict = {
         "bam": "results/mapped/{wildcards.sample}.bl.bam".format(wildcards=wildcards),
         "bai": "results/mapped/{wildcards.sample}.bl.bam.bai".format(wildcards=wildcards),
-        "multiqc": "results/qc/pre_trim/multiqc_data/multiqc_general_stats.txt",
+        "multiqc": "results/qc/multiqc/multiqc_data/multiqc_general_stats.txt",#"results/qc/pre_trim/multiqc_data/multiqc_general_stats.txt",
         "egs": "results/effective_genome_sizes/effective_genome_sizes.csv",
     }
     # Add additional input files depending on config file
@@ -340,7 +342,7 @@ def calculate_effective_genome_sizes_input():
     Returns input files for calculate_effective_genome_sizes rule
     """
     _dict = {
-            "multiqc": "results/qc/pre_trim/multiqc_data/multiqc_general_stats.txt",
+            "multiqc": "results/qc/multiqc/multiqc_data/multiqc_general_stats.txt", #"results/qc/pre_trim/multiqc_data/multiqc_general_stats.txt",
         }
 
     if config["remove_MT_seqs"]:
