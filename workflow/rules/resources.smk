@@ -72,19 +72,6 @@ if config["remove_MT_seqs"]:
         shell:
             "grep '^{params.mt}' {input} | awk '{{print $2}}' > {output} 2> {log} "
 
-    '''
-    rule convert_mt_fasta_to_bed:
-        input:
-            fasta=resources.mt_fasta,
-        output:
-            bed=resources.mt_bed,
-        log:
-            "logs/resources/convert_mt_fasta_to_bed.log"
-        conda:
-            "../envs/mapping.yaml"
-        shell:
-            "faidx --transform bed {input} > {output} 2> {log}"
-    '''
 
 if config["spike-in"]["apply_spike_in"]:
     use rule get_fasta as get_spike_in_fasta with:
