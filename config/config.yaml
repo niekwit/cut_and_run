@@ -1,11 +1,11 @@
 # Notes: 
 # Use Python style for boolean values (True/False)
 genome: dm6
-ensembl_genome_build: "110"
+ensembl_genome_build: 110
 spike-in:
   apply_spike_in: False
   genome: MG1655
-  ensembl_genome_build: "57"
+  ensembl_genome_build: 57
   normalisation: divide # bigwig normalisation method: divide or multiply
 use_trim_galore: False # Use Trim_galore instead of cutadapt
 cutadapt:
@@ -14,14 +14,12 @@ cutadapt:
   extra: "-q 20 " # Quality score cutoff
   min_length: 30
 remove_MT_seqs: True # Create bowtie2 index without MT sequences
-remove_blacklisted_regions: True # Remove blacklisted regions from the genome
 bowtie2:
   min_length: 10 # The minimum fragment length for valid paired-end alignments
   max_length: 700 # The maximum fragment length for valid paired-end alignments
   MAPQ_cutoff: 5 # Skip alignments with MAPQ smaller than this value
   extra: "" # Extra parameters for bowtie2
   samtools_extra: "" # Extra parameters for samtools
-deduplication: False
 deeptools:
   bigwig:
     normalisation: RPKM # Will be ignored if spike-in is applied
