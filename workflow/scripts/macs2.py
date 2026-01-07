@@ -41,6 +41,12 @@ with open(egs, 'r') as file:
             effective_genome_size = int(row[1])
             break
 
+# Define input data format
+if snakemake.params["paired_end"]:
+    data_format = "BAMPE"
+else:
+    data_format = "BAM"
+
 # Define file basename
 if not control_available:
     name = sample
@@ -55,7 +61,7 @@ shell(
     "{control} "
     "--gsize {effective_genome_size} "
     "--qvalue {qvalue} "
-    "--format BAMPE "
+    "--format {data_format} "
     "--keep-dup all "
     "{mode} "
     "--outdir {outdir} "
