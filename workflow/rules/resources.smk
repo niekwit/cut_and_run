@@ -2,7 +2,6 @@ rule get_fasta:
     output:
         resources.fasta,
     retries: 3
-    cache: True
     params:
         url=resources.fasta_url,
     log:
@@ -29,7 +28,7 @@ rule index_fasta:
         params:
             extra="",  # optional params string
         wrapper:
-            f"{wrapper_version}/bio/samtools/faidx"
+            "v7.0.0/bio/samtools/faidx"
 
 
 if config["remove_MT_seqs"]:
@@ -92,13 +91,22 @@ use rule get_fasta as get_gtf with:
             "logs/resources/get_gtf.log"
 
 
-use rule get_fasta as get_black_list with:
-        output:
-            resources.blacklist,
-        params:
-            url=resources.blacklist_url,
-        log:
-            "logs/resources/get_black_list.log"
+rule get_blacklist:
+    output:
+        resources.blacklist,
+    params:
+        url=resources.blacklist_url,
+        genome=genome,
+    log:
+        "logs/resources/get_black_list.log"
+    threads: 1
+    retry: 3
+    resources: 
+        runtime=10
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/get_blacklist.R"
 
 
 rule convert2ensembl:
@@ -130,7 +138,6 @@ rule bowtie2_build:
             ".rev.1.bt2",
             ".rev.2.bt2",
         ),
-    cache: True
     log:
         "logs/bowtie2_build_genome/build.log",
     params:
@@ -139,7 +146,7 @@ rule bowtie2_build:
     resources:
         runtime=config["resources"]["index"]["time"],
     wrapper:
-        f"{wrapper_version}/bio/bowtie2/build"
+        "v7.0.0/bio/bowtie2/build"
 
 
 rule chrom_sizes:
@@ -165,6 +172,7 @@ rule create_annotation_file:
         gtf=resources.gtf,
     output:
         rdata=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
+        txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     log:
         "logs/resources/create_annotation_file.log"
     threads: config["resources"]["plotting"]["cpu"]
