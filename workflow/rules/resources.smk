@@ -100,7 +100,7 @@ rule get_blacklist:
     log:
         "logs/resources/get_black_list.log"
     threads: 1
-    retry: 3
+    retries: 3
     resources: 
         runtime=10
     conda:
