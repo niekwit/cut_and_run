@@ -7,14 +7,14 @@ type: object
 properties:
   genome:
     type: string
-    enum: ["hg38", "hg19", "mm10", "mm9", "dm3", "dm6"]
+    enum: ["hg38", "hg19", "mm39", "mm38", "dm3", "dm6"]
     description: Ensembl genome
-  
+
   ensembl_genome_build:
     type: integer
     minimum: 1
     description: Gencode genome build
-  
+
   spike_in:
     type: object
     properties:
@@ -36,9 +36,29 @@ properties:
     type: object
     properties:
       a:
-        type: string
+        type: array
+        items:
+          type: string
       A:
-        type: string
+        type: array
+        items:
+          type: string
+      g:
+        type: array
+        items:
+          type: string
+      G:
+        type: array
+        items:
+          type: string
+      b:
+        type: array
+        items:
+          type: string
+      B:
+        type: array
+        items:
+          type: string
       extra:
         type: string
       min_length:
@@ -47,6 +67,10 @@ properties:
     required:
       - a
       - A
+      - g
+      - G
+      - b
+      - B
       - extra
       - min_length
 
@@ -65,7 +89,7 @@ properties:
         minimum: 1
       MAPQ_cutoff:
         type: integer
-        minimum: 1
+        minimum: 0
       extra:
         type: string
       samtools_extra:
@@ -181,12 +205,46 @@ properties:
             maximum: 1
           extra:
             type: string
+          consensus_peaks:
+            type: object
+            properties:
+              max_size:
+                type: integer
+                minimum: 1
+              extend_by:
+                type: integer
+                minimum: 0
+              keep:
+                type: integer
+                minimum: 1
+              enrichment_analysis:
+                type: object
+                properties:
+                  run:
+                    type: boolean
+                  dbs:
+                    type: array
+                    items:
+                      type: string
+                  terms:
+                    type: integer
+                    minimum: 1
+                required:
+                  - run
+                  - dbs
+                  - terms
+            required:
+              - max_size
+              - extend_by
+              - keep
+              - enrichment_analysis
         required:
           - use_macs2
           - broad
           - qvalue
           - broad_cutoff
           - extra
+          - consensus_peaks
 
       htseq_count:
         type: object
@@ -217,11 +275,14 @@ properties:
                 type: number
                 minimum: 0
                 description: log2 fold change cut off for volcano plots
+              deseq2_apply_control:
+                type: boolean
             required:
               - cumulative_filter_out
               - smallest_group
               - alpha
               - fc
+              - deseq2_apply_control
         required:
           - use_htseq_count
           - mode
