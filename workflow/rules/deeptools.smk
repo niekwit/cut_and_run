@@ -4,12 +4,12 @@ rule multiBigwigSummary:
     output:
         "results/deeptools/scores_per_bin.npz",
     params:
-        extra=""
+        extra="",
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/deeptools/multiBigwigSummary.log"
+        "logs/deeptools/multiBigwigSummary.log",
     conda:
         "../envs/deeptools.yaml"
     shell:
@@ -28,12 +28,12 @@ rule PCA:
     output:
         "results/deeptools/PCA.tab",
     params:
-        extra=""
+        extra="",
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/deeptools/PCA.log"
+        "logs/deeptools/PCA.log",
     conda:
         "../envs/deeptools.yaml"
     shell:
@@ -54,41 +54,44 @@ rule BAM_fragment_sizes:
         table="results/qc/fragment_lengths.tsv",
         raw="results/qc/fragment_lengths_raw.tsv",
     params:
-        names= " ".join(SAMPLES),
+        names=" ".join(SAMPLES),
         max_len=config["bowtie2"]["max_length"],
-    threads: config["resources"]["deeptools"]["cpu"],
+    threads: config["resources"]["deeptools"]["cpu"]
     resources:
         runtime=config["resources"]["deeptools"]["time"],
     log:
         "logs/deeptools/BAM_fragment_sizes.log",
     conda:
-        "../envs/deeptools.yaml",
+        "../envs/deeptools.yaml"
     shell:
         "bamPEFragmentSize "
-        "--numberOfProcessors {threads} " 
+        "--numberOfProcessors {threads} "
         "--maxFragmentLength {params.max_len} "
         "--bamfiles {input.bam} "
-        "--histogram {output.hist} " 
+        "--histogram {output.hist} "
         "--table {output.table} "
-        "--outRawFragmentLengths {output.raw} " 
-        "--samplesLabel {params.names} " 
+        "--outRawFragmentLengths {output.raw} "
+        "--samplesLabel {params.names} "
         "--plotTitle 'Fragment size of PE data' "
         "> {log} 2>&1"
 
 
 rule computeMatrix:
     input:
-        bw=expand("results/bigwig/average_bw/{conditions}.bw", conditions=CONDITIONS_NO_CONTROL),
+        bw=expand(
+            "results/bigwig/average_bw/{conditions}.bw",
+            conditions=CONDITIONS_NO_CONTROL,
+        ),
         gtf=resources.gtf,
     output:
         mat="results/deeptools/matrix.gz",
     params:
         args=computematrix_args(),
-    threads: config["resources"]["deeptools"]["cpu"] * 4 # Otherwise it will take very long
+    threads: config["resources"]["deeptools"]["cpu"] * 4  # Otherwise it will take very long
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/deeptools/computeMatrix.log"
+        "logs/deeptools/computeMatrix.log",
     conda:
         "../envs/deeptools.yaml"
     shell:
@@ -99,5 +102,3 @@ rule computeMatrix:
         "--scoreFileName {input.bw} "
         "--outFileName {output.mat} "
         "> {log} 2>&1"
-
-

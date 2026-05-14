@@ -12,9 +12,9 @@ rule bigwig:
         remove_MT_seqs=config["remove_MT_seqs"],
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/bigwig/{sample}.log"
+        "logs/bigwig/{sample}.log",
     conda:
         "../envs/deeptools.yaml"
     script:
@@ -23,16 +23,16 @@ rule bigwig:
 
 rule average_wig:
     input:
-        expand("results/bigwig/{sample}.bw",  sample=SAMPLES),
+        expand("results/bigwig/{sample}.bw", sample=SAMPLES),
     output:
         wig=temp("results/bigwig/average_bw/{condition}.wig"),
     params:
         extra="",
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/wiggletools/wig_average_{condition}.log"
+        "logs/wiggletools/wig_average_{condition}.log",
     conda:
         "../envs/deeptools.yaml"
     script:
@@ -49,9 +49,9 @@ rule wig2bigwig:
         extra="",
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/wigToBigWig/{condition}.log"
+        "logs/wigToBigWig/{condition}.log",
     conda:
         "../envs/deeptools.yaml"
     shell:

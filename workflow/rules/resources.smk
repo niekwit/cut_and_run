@@ -5,10 +5,10 @@ rule get_fasta:
     params:
         url=resources.fasta_url,
     log:
-        "logs/resources/get_fasta.log"
+        "logs/resources/get_fasta.log",
     threads: config["resources"]["samtools"]["cpu"]
-    resources: 
-        runtime=config["resources"]["samtools"]["time"]
+    resources:
+        runtime=config["resources"]["samtools"]["time"],
     conda:
         "../envs/mapping.yaml"
     script:
@@ -16,22 +16,23 @@ rule get_fasta:
 
 
 rule index_fasta:
-        input:
-            fasta=resources.fasta,
-        output:
-            index=f"{resources.fasta}.fai",
-        log:
-            "logs/resources/index_fasta.log"
-        threads: config["resources"]["samtools"]["cpu"]
-        resources: 
-            runtime=config["resources"]["samtools"]["time"]
-        params:
-            extra="",  # optional params string
-        wrapper:
-            "v7.0.0/bio/samtools/faidx"
+    input:
+        fasta=resources.fasta,
+    output:
+        index=f"{resources.fasta}.fai",
+    log:
+        "logs/resources/index_fasta.log",
+    threads: config["resources"]["samtools"]["cpu"]
+    resources:
+        runtime=config["resources"]["samtools"]["time"],
+    params:
+        extra="",  # optional params string
+    wrapper:
+        "v7.0.0/bio/samtools/faidx"
 
 
 if config["remove_MT_seqs"]:
+
     # based on https://bioinformatics.stackexchange.com/questions/16378/remove-from-multi-fasta-by-sequence-id?noredirect=1&lq=1
     rule remove_MT_seq_from_fasta:
         input:
@@ -42,17 +43,18 @@ if config["remove_MT_seqs"]:
         params:
             mt=mitochondrial_genome_name(),
         log:
-            "logs/resources/remove_MT_seq_from_fasta.log"
+            "logs/resources/remove_MT_seq_from_fasta.log",
         threads: 1
-        resources: 
-            runtime=15
+        resources:
+            runtime=15,
         conda:
             "../envs/mapping.yaml"
         shell:
-            "awk '{{print $1}}' {input.fai} | " # Print field with chromosome name
-            "grep -v '{params.mt}' | " # remove MT genome
-            "xargs samtools faidx {input.fasta} > {output}"  # create fasta without MT sequence
-
+            "awk '{{print $1}}' {input.fai} | "
+            "grep -v '{params.mt}' | "
+            "xargs samtools faidx {input.fasta} > {output}"  # Print field with chromosome name
+            # remove MT genome
+            # create fasta without MT sequence
 
     rule MT_genome_size:
         input:
@@ -62,10 +64,10 @@ if config["remove_MT_seqs"]:
         params:
             mt=mitochondrial_genome_name(),
         threads: 1
-        resources: 
-            runtime=10
+        resources:
+            runtime=10,
         log:
-            "logs/resources/MT_genome_size.log"
+            "logs/resources/MT_genome_size.log",
         conda:
             "../envs/mapping.yaml"
         shell:
@@ -73,22 +75,23 @@ if config["remove_MT_seqs"]:
 
 
 if config["spike_in"]["apply_spike_in"]:
+
     use rule get_fasta as get_spike_in_fasta with:
         output:
             resources_spike_in.fasta,
         params:
             url=resources_spike_in.fasta_url,
         log:
-            "logs/resources/get_spike_in_fasta.log"
-        
+            "logs/resources/get_spike_in_fasta.log",
+
 
 use rule get_fasta as get_gtf with:
-        output:
-            resources.gtf,
-        params:
-            url=resources.gtf_url,
-        log:
-            "logs/resources/get_gtf.log"
+    output:
+        resources.gtf,
+    params:
+        url=resources.gtf_url,
+    log:
+        "logs/resources/get_gtf.log",
 
 
 rule get_blacklist:
@@ -98,11 +101,11 @@ rule get_blacklist:
         url=resources.blacklist_url,
         genome=genome,
     log:
-        "logs/resources/get_black_list.log"
+        "logs/resources/get_black_list.log",
     threads: 1
     retries: 3
-    resources: 
-        runtime=10
+    resources:
+        runtime=10,
     conda:
         "../envs/R.yaml"
     script:
@@ -115,12 +118,12 @@ rule convert2ensembl:
     output:
         resources.ensembl_blacklist,
     threads: 1
-    resources: 
-        runtime=10
+    resources:
+        runtime=10,
     conda:
         "../envs/mapping.yaml"
     log:
-        "logs/resources/convert_blacklist2ensembl.log"
+        "logs/resources/convert_blacklist2ensembl.log",
     shell:
         "sed 's/^chr//' {input} > {output} 2> {log}"
 
@@ -156,10 +159,10 @@ rule chrom_sizes:
     output:
         f"resources/{resources.genome}_chrom.sizes",
     log:
-        "logs/resources/chrom_sizes.log"
+        "logs/resources/chrom_sizes.log",
     threads: config["resources"]["plotting"]["cpu"]
-    resources: 
-        runtime=config["resources"]["plotting"]["time"]
+    resources:
+        runtime=config["resources"]["plotting"]["time"],
     conda:
         "../envs/mapping.yaml"
     shell:
@@ -174,10 +177,10 @@ rule create_annotation_file:
         rdata=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     log:
-        "logs/resources/create_annotation_file.log"
+        "logs/resources/create_annotation_file.log",
     threads: config["resources"]["plotting"]["cpu"]
-    resources: 
-        runtime=config["resources"]["plotting"]["time"]
+    resources:
+        runtime=config["resources"]["plotting"]["time"],
     conda:
         "../envs/diffbind.yaml"
     script:

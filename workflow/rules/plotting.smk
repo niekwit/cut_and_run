@@ -5,13 +5,13 @@ rule plot_mapping_rates:
     output:
         rates="results/plots/qc/mapping_rates.pdf",
         counts="results/plots/qc/mapping_read_number.pdf",
-    threads: config["resources"]["plotting"]["cpu"],
+    threads: config["resources"]["plotting"]["cpu"]
     resources:
         runtime=config["resources"]["plotting"]["time"],
     log:
         "logs/plots/mapping_rates.log",
     conda:
-        "../envs/R.yaml",
+        "../envs/R.yaml"
     script:
         "../scripts/plot_mapping_rates.R"
 
@@ -21,13 +21,13 @@ rule plot_fragment_lengths:
         tsv="results/qc/fragment_lengths_raw.tsv",
     output:
         pdf="results/plots/qc/bam_fragment_lengths.pdf",
-    threads: config["resources"]["samtools"]["cpu"],
+    threads: config["resources"]["samtools"]["cpu"]
     resources:
         runtime=config["resources"]["samtools"]["time"],
     log:
         "logs/plots/bam_fragment_lengths.log",
     conda:
-        "../envs/R.yaml",
+        "../envs/R.yaml"
     script:
         "../scripts/plot_bam_fragment_lengths.R"
 
@@ -39,12 +39,12 @@ rule plot_PCA:
         pca="results/plots/qc/PCA.pdf",
         scree="results/plots/qc/scree.pdf",
     params:
-        extra=""
+        extra="",
     threads: config["resources"]["plotting"]["cpu"]
     resources:
-        runtime=config["resources"]["plotting"]["time"]
+        runtime=config["resources"]["plotting"]["time"],
     log:
-        "logs/plots/plotPCA.log"
+        "logs/plots/plotPCA.log",
     conda:
         "../envs/R.yaml"
     script:
@@ -58,16 +58,16 @@ rule plot_heatmap:
         pdf="results/plots/heatmap.pdf",
         mat="results/deeptools/heatmap_matrix.gz",
     params:
-        im = config["deeptools"]["plotHeatmap"]["interpolationMethod"],
-        pt = config["deeptools"]["plotHeatmap"]["plotType"],
-        cm = config["deeptools"]["plotHeatmap"]["colorMap"],
-        a = config["deeptools"]["plotHeatmap"]["alpha"],
+        im=config["deeptools"]["plotHeatmap"]["interpolationMethod"],
+        pt=config["deeptools"]["plotHeatmap"]["plotType"],
+        cm=config["deeptools"]["plotHeatmap"]["colorMap"],
+        a=config["deeptools"]["plotHeatmap"]["alpha"],
         extra="",
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
-        runtime=config["resources"]["deeptools"]["time"]
+        runtime=config["resources"]["deeptools"]["time"],
     log:
-        "logs/deeptools/plotHeatmap.log"
+        "logs/deeptools/plotHeatmap.log",
     conda:
         "../envs/deeptools.yaml"
     shell:
@@ -83,6 +83,7 @@ rule plot_heatmap:
 
 
 if config["peak_calling"]["htseq_count"]["use_htseq_count"]:
+
     rule plot_peaks_volcano:
         input:
             xlsx="results/peaks/DESeq2/differential_peaks.xlsx",
@@ -95,9 +96,9 @@ if config["peak_calling"]["htseq_count"]["use_htseq_count"]:
             extra="",
         threads: config["resources"]["plotting"]["cpu"]
         resources:
-            runtime=config["resources"]["plotting"]["time"]
+            runtime=config["resources"]["plotting"]["time"],
         log:
-            "logs/plots/volcano_peaks.log"
+            "logs/plots/volcano_peaks.log",
         conda:
             "../envs/R.yaml"
         script:

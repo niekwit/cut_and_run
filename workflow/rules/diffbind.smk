@@ -1,9 +1,13 @@
 if run_diffbind():
+
     rule diffbind:
-        input:  
-            xls = expand(f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls", conditions=CONDITIONS),
-            bam = expand("results/mapped/{sample}.bl.bam", sample=SAMPLES),
-            bai = expand("results/mapped/{sample}.bl.bam.bai", sample=SAMPLES),
+        input:
+            xls=expand(
+                f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls",
+                conditions=CONDITIONS,
+            ),
+            bam=expand("results/mapped/{sample}.bl.bam", sample=SAMPLES),
+            bai=expand("results/mapped/{sample}.bl.bam.bai", sample=SAMPLES),
         output:
             dba=f"results/diffbind/{PEAK_MODE}/fdr{fdr}/dba.RData",
             pca=f"results/plots/diffbind/{PEAK_MODE}/fdr{fdr}/PCA.pdf",
@@ -19,6 +23,6 @@ if run_diffbind():
         conda:
             "../envs/diffbind.yaml"
         log:
-            "logs/diffbind/{peak_mode}/fdr{fdr}/diffbind.log"
+            "logs/diffbind/{peak_mode}/fdr{fdr}/diffbind.log",
         script:
             "../scripts/diffbind.R"
