@@ -5,22 +5,31 @@ sink(log, type = "message")
 
 library(rtracklayer)
 library(tidyverse)
+library(GenomicFeatures)
 
 # Load Snakemake parameters
 gtf <- snakemake@input[["gtf"]]
+
+# Create EDB
+# ------------------------------
 
 # Load GTF file
 db <- rtracklayer::import(gtf)
 
 # Extract relevant information
-edb <- data.frame(geneId = db$gene_id, 
-                  geneName = db$gene_name, 
-                  geneBiotype = db$gene_biotype) %>%
+edb <- data.frame(
+  geneId = db$gene_id,
+  geneName = db$gene_name,
+  geneBiotype = db$gene_biotype
+) %>%
   distinct()
 
 # Save df to file as R object
 save(edb, file = snakemake@output[["rdata"]])
 
-# Close redirection of output/messages
-sink(log, type = "output")
-sink(log, type = "message")
+# Create Txdb
+# ------------------------------
+txdb <- makeTxDbFromGFF(gtf)
+
+# Save Txdb to file as R object
+save(txdb, file = snakemake@output[["txdb"]])
