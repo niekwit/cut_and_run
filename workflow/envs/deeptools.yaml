@@ -10,3 +10,4 @@ dependencies:
   - pysam=0.22.0
   - wiggletools=1.2.11
   - ucsc-wigtobigwig=447
+  - pybedtools 0.10.0
