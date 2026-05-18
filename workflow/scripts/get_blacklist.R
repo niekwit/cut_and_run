@@ -9,7 +9,7 @@ sink(log, type = "message")
 
 library(openxlsx)
 
-genome <- snakemake@params["genome"]
+genome <- snakemake@params[["genome"]]
 blacklist_file <- snakemake@output[[1]]
 
 # Download blacklist xlsx file
@@ -47,6 +47,6 @@ if (genome %in% sheet_names) {
     genome,
     "\nFetching ChIP-seq blacklist instead..."
   ))
-  url <- snakemake@params["url"]
+  url <- snakemake@params[["url"]]
   download.file(url, blacklist_file)
 }
