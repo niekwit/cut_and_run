@@ -49,7 +49,16 @@ default_effective_genome_size = {
         "150": 2494787188,
         "200": 2520869189,
     },
+    "mm39": {
+        "50": 2309746861,
+        "75": 2410055689,
+        "100": 2468088461,
+        "150": 2495461690,
+        "200": 2521902382,
+        "250": 2538633971,
+    },
 }
+
 # Load multiqc file
 multiqc = pd.read_csv(multiqc, sep="\t")
 
@@ -61,23 +70,24 @@ for index, row in multiqc.iterrows():
     sample = row.iloc[0]
     sample = re.sub(r"_R[12]_001", "", sample)
     read_length = row.iloc[4]
-    
+
     # If read length is not in dict, pick the closest read length
     if read_length not in default_effective_genome_size[genome]:
-        read_length = min(default_effective_genome_size[genome], key=lambda x: abs(int(x) - int(read_length)))
-    
+        read_length = min(
+            default_effective_genome_size[genome],
+            key=lambda x: abs(int(x) - int(read_length)),
+        )
+
     effective_genome_size = default_effective_genome_size[genome][read_length]
-    
+
     # Remove MT genome size from effective genome size
     if MT_seqs_removed:
         with open(snakemake.input["mgs"]) as f:
             mt_genome_size = int(f.read().strip())
         effective_genome_size -= mt_genome_size
-    
+
     # Add to df
     df.loc[index] = [sample, effective_genome_size]
-    
+
 # Save df to file
 df.to_csv(snakemake.output["egs"], index=False)
-
-
