@@ -51,7 +51,7 @@ if PAIRED_END:
             "-2 {input.r2} 2> {log} | "
             "samtools view "
             "--min-MQ {params.min_mq} "
-            "{params.extra} "
+            "{params.samtools_extra} "
             "-bhS > {output}"
             # read characters from one or both ends of the alignment might be trimmed to maximize the alignment score
             # Consider soft-clipped bases unmapped when calculating TLEN (observed Template LENgth, is SAM field)
@@ -101,7 +101,7 @@ else:
             "-U {input.sample} 2> {log} | "
             "samtools view "
             "--min-MQ {params.min_mq} "
-            "{params.extra} "
+            "{params.samtools_extra} "
             "-bhS > {output}"
             # Convert SAM to BAM
             # Minimum mapping quality
@@ -169,7 +169,7 @@ if config["spike_in"]["apply_spike_in"]:
             "--phred33 "
             "--threads {threads} "
             "-x {params.idx} "
-            "{params.extra} "
+            "{params.samtools_extra} "
             "-1 {input.r1} "
             "-2 {input.r2} 2> {log} | "
             "samtools view "
