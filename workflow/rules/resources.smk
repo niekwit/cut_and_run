@@ -125,7 +125,7 @@ rule convert2ensembl:
     log:
         "logs/resources/convert_blacklist2ensembl.log",
     shell:
-        "sed 's/^chr//' {input} > {output} 2> {log}"
+        "sed 's/^chr//;s/\s/\t/g' {input} > {output} 2> {log}"
 
 
 rule bowtie2_build:
