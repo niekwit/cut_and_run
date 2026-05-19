@@ -80,7 +80,7 @@ rule computeMatrix:
     input:
         bw=expand(
             "results/bigwig/average_bw/{conditions}.bw",
-            conditions=CONDITIONS_NO_CONTROL,
+            conditions=CONDITIONS,
         ),
         gtf=resources.gtf,
     output:
