@@ -69,6 +69,6 @@ p <- ggplot(df, aes(x = Size, fill = replicate)) +
 ggsave(
   snakemake@output[["pdf"]],
   p,
-  height = length(conditions) * 0.6,
+  height = length(conditions) * 3,
   width = 6
 )

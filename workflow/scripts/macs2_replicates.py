@@ -38,7 +38,8 @@ else:
 # Run MACS2 for each condition and match controls
 conditions = list(set(re.sub("_[\d]$", "", x) for x in _csv["sample"].tolist()))
 for c in conditions:
-    #log = snakemake.log_fmt_shell(stdout=True, stderr=True)
+    # Get log file for condition
+    log = [x for x in logs if c in x][0]
     
     bams = [x for x in tbams if c in x]
     if not control_available:
@@ -78,6 +79,6 @@ for c in conditions:
         "--outdir {outdir} "
         "--name {c} "
         "{extra} "
-        #"{log} "
+        "> {log} 2>&1 "
     )
 

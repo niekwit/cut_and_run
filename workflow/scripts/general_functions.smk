@@ -13,8 +13,8 @@ def targets():
     """
     # Base targets
     TARGETS = [
-        #"results/plots/qc/mapping_rates.pdf",
-        #"results/plots/qc/mapping_read_number.pdf",
+        # "results/plots/qc/mapping_rates.pdf",
+        # "results/plots/qc/mapping_read_number.pdf",
         "results/plots/qc/PCA.pdf",
         "results/plots/qc/scree.pdf",
         "results/plots/qc/bam_fragment_lengths.pdf",
@@ -121,7 +121,7 @@ def targets():
                         ),
                     ]
                 )
-        #TARGETS.extend(
+        # TARGETS.extend(
         #    [
         #        expand(
         #            f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.bed",
@@ -132,7 +132,13 @@ def targets():
         #            conditions=CONDITIONS_NO_CONTROL,
         #        ),
         #    ]
-        #)
+        # )
+        TARGETS.extend(
+            expand(
+                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.annotated.peaks.txt",
+                conditions=CONDITIONS_NO_CONTROL,
+            )
+        )
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend(
             [
@@ -140,7 +146,7 @@ def targets():
                 "results/htseq_count/DESeq2/dds.RData",
             ]
         )
-    
+
     return TARGETS
 
 
@@ -222,7 +228,7 @@ def cutadapt_args(config, param):
             if len(seqs) > 0:
                 for s in seqs:
                     args = f'{args} -{letter} "{s}" '
-        
+
         # Check if any adapter sequences were found
         if len(args) == 0:
             raise ValueError(
