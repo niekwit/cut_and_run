@@ -2,7 +2,7 @@
 
 Use this file to describe sample meta data:
 
-`samples`: sample name that matches read file name without extension
+`sample`: sample name that matches read file name without extension
 
 `genotype`: genotype of the sample
 
@@ -12,4 +12,6 @@ Use this file to describe sample meta data:
 
 `batch`: numerical value for batch 
 
-`reference`: xxx
+`control`: (optional) name of the matched IgG/input sample
+
+`reference`: `yes` for the reference condition (reserved for DiffBind, not currently run)

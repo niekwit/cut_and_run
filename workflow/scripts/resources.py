@@ -18,7 +18,7 @@ class Resources:
             if genome == "hg19":
                 name = "GRCh37"
 
-                self.blacklist_url = "https://github.com/Boyle-Lab/Blacklist/blob/master/lists/hg19-blacklist.v2.bed.gz"
+                self.blacklist_url = "https://github.com/Boyle-Lab/Blacklist/raw/master/lists/hg19-blacklist.v2.bed.gz"
             elif genome == "hg38":
                 name = "GRCh38"
 
@@ -34,6 +34,7 @@ class Resources:
         elif "mm" in genome:
             if genome == "mm38":
                 name = "GRCm38"
+                self.blacklist_url = "https://github.com/Boyle-Lab/Blacklist/raw/master/lists/mm10-blacklist.v2.bed.gz"
 
             elif genome == "mm39":
                 name = "GRCm39"

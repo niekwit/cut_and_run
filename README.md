@@ -28,7 +28,7 @@ Bowtie2 alignment → SAM → BAM (sorted, filtered by MAPQ)
     ▼
 Blacklist filtering (samtools)
     │
-    ├── [optional] Spike-in scale factor calculation (E. coli MG1655 or custom)
+    ├── [optional] Spike-in scale factor calculation (E. coli MG1655)
     │
     ▼
 BigWig generation (deepTools bamCoverage; RPKM/CPM/BPM/RPGC or spike-in normalised)
@@ -37,8 +37,8 @@ BigWig generation (deepTools bamCoverage; RPKM/CPM/BPM/RPGC or spike-in normalis
     │
     ▼
 Peak calling
-    ├── MACS2 narrow or broad peaks (per-sample and replicate-merged)
-    │       └── Consensus peaks → ChIPseeker annotation
+    ├── MACS2 narrow or broad peaks (per sample)
+    │       └── Consensus peaks across replicates → ChIPseeker annotation
     └── HTSeq-count + DESeq2 (gene-level differential analysis)
     │
     ▼
@@ -54,7 +54,7 @@ QC plots (PCA, scree plot, fragment length distribution)
 Install Snakemake (≥ 8.25.0) using conda/mamba:
 
 ```bash
-conda create -n snakemake -c conda-forge -c bioconda snakemake
+conda create -n snakemake -c conda-forge -c bioconda snakemake=8.25.5
 conda activate snakemake
 ```
 
@@ -69,7 +69,7 @@ Alternatively, use [Snakedeploy](https://snakedeploy.readthedocs.io) to deploy t
 
 ```bash
 pip install snakedeploy
-snakedeploy deploy-workflow https://github.com/niekwit/cut_and_run . --tag main
+snakedeploy deploy-workflow https://github.com/niekwit/cut_and_run . --branch main
 ```
 
 ### 3. Place FASTQ files
@@ -106,8 +106,8 @@ Describe your samples in `config/samples.csv`. Required columns:
 | `treatment` | Treatment condition (`None` if untreated)                                               |
 | `factor`    | Antibody target or `IgG`/`input` for controls                                           |
 | `control`   | _(optional)_ Name of the matched control sample (IgG/input) for peak calling            |
-| `batch`     | _(optional)_ Numerical batch identifier for DiffBind                                    |
-| `reference` | _(optional)_ Set to `yes` for the reference condition in DiffBind differential analysis |
+| `batch`     | _(optional)_ Numerical batch identifier (reserved for DiffBind, not currently run)      |
+| `reference` | _(optional)_ `yes` for the reference condition (reserved for DiffBind, not currently run) |
 
 Example:
 
@@ -115,8 +115,6 @@ Example:
 | ------------ | -------- | --------- | ------- | -------- |
 | WT_H3K4me3_1 | WT       | None      | H3K4me3 | WT_IgG_1 |
 | WT_H3K4me3_2 | WT       | None      | H3K4me3 | WT_IgG_2 |
-| WT_IgG_1     | WT       | None      | IgG     |          |
-| WT_IgG_2     | WT       | None      | IgG     |          |
 
 ### `config/config.yaml`
 
@@ -124,7 +122,7 @@ Key settings to adjust before running:
 
 | Setting                                    | Description                                                     | Example           |
 | ------------------------------------------ | --------------------------------------------------------------- | ----------------- |
-| `genome`                                   | Reference genome (`hg38`, `hg19`, `mm39`, `mm38`, `dm3`, `dm6`) | `hg38`            |
+| `genome`                                   | Reference genome (`hg38`, `hg19`, `mm39`, `mm38`, `dm6`)        | `hg38`            |
 | `ensembl_genome_build`                     | Ensembl build number                                            | `110`             |
 | `spike_in.apply_spike_in`                  | Enable spike-in normalisation                                   | `False`           |
 | `spike_in.genome`                          | Spike-in genome (e.g. `MG1655` for _E. coli_)                   | `MG1655`          |
@@ -175,7 +173,7 @@ Set `spike_in.apply_spike_in: True` and provide the spike-in genome identifier a
 ### Peak calling modes
 
 - **MACS2 narrow** (`broad: False`): for transcription factors.
-- **MACS2 broad** (`broad: True`): for broad histone marks (e.g. H3K4me3).
+- **MACS2 broad** (`broad: True`): for broad histone marks (e.g. H3K27me3).
 - **HTSeq-count + DESeq2** (`use_htseq_count: True`): gene-level read counting followed by differential analysis with DESeq2. Use this when treating CUT&RUN data as a counting experiment rather than peak-based analysis.
 
 ---

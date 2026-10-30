@@ -108,15 +108,15 @@ def targets():
                 TARGETS.extend(
                     [
                         expand(
-                            f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
+                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
                             ip_sample=IP_SAMPLES,
                         ),
                         expand(
-                            f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
+                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
                             ip_sample=IP_SAMPLES,
                         ),
                         expand(
-                            f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed",
+                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed",
                             ip_sample=IP_SAMPLES,
                         ),
                     ]
@@ -214,6 +214,24 @@ def control_available():
         return True
     except KeyError:
         return False
+
+
+def macs2_sample_peaks():
+    """
+    Returns per-sample MACS2 peak files for the selected peak calling mode
+    """
+    ext = "narrowPeak" if PEAK_MODE == "macs2_narrow" else "broadPeak"
+    if control_available():
+        return expand(
+            f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.{ext}",
+            zip,
+            ip_sample=IP_SAMPLES,
+            control_sample=CONTROL_SAMPLES,
+        )
+    return expand(
+        f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.{ext}",
+        ip_sample=IP_SAMPLES,
+    )
 
 
 def cutadapt_args(config, param):
@@ -377,9 +395,9 @@ def run_diffbind():
         if len(references) > 1 and "yes" in references:
             return True
         else:
-            False
+            return False
     else:
-        False
+        return False
 
 
 def mitochondrial_genome_name():

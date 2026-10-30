@@ -48,5 +48,11 @@ if (genome %in% sheet_names) {
     "\nFetching ChIP-seq blacklist instead..."
   ))
   url <- snakemake@params[["url"]]
-  download.file(url, blacklist_file)
+  if (url == "") {
+    stop(paste("No blacklist available for", genome))
+  }
+  # ChIP-seq blacklists are gzipped: gzfile() reads both gzipped and plain files
+  tmp <- tempfile()
+  download.file(url, tmp)
+  writeLines(readLines(gzfile(tmp)), blacklist_file)
 }
