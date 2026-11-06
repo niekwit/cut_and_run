@@ -268,31 +268,23 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
 
     rule consensus_peaks:
         input:
-            beds=macs2_sample_peaks(),
+            beds=consensus_beds,
             chrom_sizes=f"resources/{resources.genome}_chrom.sizes",
         output:
-            bed_out_intermediate=expand(
-                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.multi_intersect.bed",
-                conditions=CONDITIONS_NO_CONTROL,
-            ),
-            bed_out=expand(
-                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
-                conditions=CONDITIONS_NO_CONTROL,
-            ),
+            bed_out_intermediate=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.multi_intersect.bed",
+            bed_out=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.bed",
         params:
             max_size=config["peak_calling"]["macs2"]["consensus_peaks"]["max_size"],
             extend_by=config["peak_calling"]["macs2"]["consensus_peaks"]["extend_by"],
             keep=config["peak_calling"]["macs2"]["consensus_peaks"]["keep"],
-            conditions=CONDITIONS_NO_CONTROL,
             extra="",
+        wildcard_constraints:
+            condition="|".join(re.escape(c) for c in CONSENSUS_CONDITIONS),
         threads: config["resources"]["deeptools"]["cpu"]
         resources:
             runtime=config["resources"]["deeptools"]["time"],
         log:
-            expand(
-                f"logs/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.log",
-                conditions=CONDITIONS_NO_CONTROL,
-            ),
+            f"logs/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.log",
         conda:
             "../envs/deeptools.yaml"
         script:
@@ -301,8 +293,8 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
     rule peak_annotation_plots:
         input:
             bed=expand(
-                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
-                conditions=CONDITIONS_NO_CONTROL,
+                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.bed",
+                condition=CONSENSUS_CONDITIONS,
             ),
             gtf=resources.gtf,
         output:
@@ -320,18 +312,18 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
 
     rule annotate_peaks:
         input:
-            bed=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
+            bed=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.bed",
             edb=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
             txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
         output:
-            txt=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.annotated.peaks.txt",
+            txt=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.annotated.peaks.txt",
         params:
             gtf=resources.gtf,
         threads: config["resources"]["deeptools"]["cpu"]
         resources:
             runtime=config["resources"]["deeptools"]["time"],
         log:
-            f"logs/annotate_peaks/{PEAK_MODE}/fdr{fdr}/{{conditions}}.log",
+            f"logs/annotate_peaks/{PEAK_MODE}/fdr{fdr}/{{condition}}.log",
         conda:
             "../envs/diffbind.yaml"
         script:

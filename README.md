@@ -118,6 +118,8 @@ Example:
 | WT_H3K4me3_1 | WT       | None      | H3K4me3 | WT_IgG_1 |
 | WT_H3K4me3_2 | WT       | None      | H3K4me3 | WT_IgG_2 |
 
+The condition of each IP sample is `{genotype}_{treatment}_{factor}` (e.g. `WT_None_H3K4me3`). Consensus peaks are made from the replicates of each condition and written to `consensus_peaks/{genotype}_{treatment}_{factor}.bed`.
+
 ### `config/downsample.csv` (optional)
 
 To downsample reads before trimming, create `config/downsample.csv` with the percentage of reads to keep for each sample. IP and control (IgG/input) samples can both be listed:
