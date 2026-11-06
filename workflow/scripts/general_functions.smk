@@ -135,8 +135,8 @@ def targets():
         # )
         TARGETS.extend(
             expand(
-                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.annotated.peaks.txt",
-                conditions=CONDITIONS_NO_CONTROL,
+                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.annotated.peaks.txt",
+                condition=CONSENSUS_CONDITIONS,
             )
         )
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
@@ -295,6 +295,58 @@ def macs2_sample_peaks():
         f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.{ext}",
         ip_sample=IP_SAMPLES,
     )
+
+
+def sample_conditions():
+    """
+    Returns a dictionary with the condition of each IP sample,
+    i.e. the genotype, treatment and factor columns of samples.csv joined by "_"
+    """
+    # Read as strings so that values such as "None" are kept as is
+    df = pd.read_csv("config/samples.csv", dtype=str, keep_default_na=False)
+
+    columns = ["genotype", "treatment", "factor"]
+    missing = [c for c in columns if c not in df.columns]
+    if missing:
+        raise ValueError(
+            f"Following columns are missing in samples.csv: {', '.join(missing)}"
+        )
+
+    conditions = {}
+    for row in df.itertuples():
+        values = [getattr(row, c).strip() for c in columns]
+        if "" in values:
+            raise ValueError(
+                f"Sample {row.sample} has an empty genotype, treatment or factor "
+                "in samples.csv"
+            )
+        conditions[row.sample] = "_".join(values)
+
+    # Conditions are used in file names
+    illegal = sorted(
+        set(c for c in conditions.values() if not re.match(r"^[a-zA-Z0-9_.-]+$", c))
+    )
+    if illegal:
+        illegal = "\n".join(illegal)
+        raise ValueError(
+            "Following genotype_treatment_factor conditions in samples.csv contain "
+            f"illegal characters:\n{illegal}"
+        )
+
+    return conditions
+
+
+def consensus_beds(wildcards):
+    """
+    Returns the MACS2 peak files of all IP samples that belong to the
+    condition of the consensus peaks rule (exact match on genotype_treatment_factor)
+    """
+    beds = macs2_sample_peaks()
+    return [
+        bed
+        for ip_sample, bed in zip(IP_SAMPLES, beds)
+        if SAMPLE_CONDITIONS[ip_sample] == wildcards.condition
+    ]
 
 
 def cutadapt_args(config, param):

@@ -8,6 +8,8 @@ Use this file to describe sample meta data:
 
 `treatment`: treatment condition
 
+The condition of each IP sample is `{genotype}_{treatment}_{factor}`; consensus peaks are made per condition
+
 `factor`: antibody used or input/IgG
 
 `batch`: numerical value for batch 
