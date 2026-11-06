@@ -31,9 +31,11 @@ for (i in sheet_names) {
 }
 
 # Select the blacklist for the genome
-if (genome %in% sheet_names) {
+# (mm38/GRCm38 is the same assembly as the mm10 sheet)
+sheet_name <- if (genome == "mm38") "mm10" else genome
+if (sheet_name %in% sheet_names) {
   print(paste("Fetching", genome, "Cut & Run blacklist..."))
-  blacklist <- blacklists[[genome]]
+  blacklist <- blacklists[[sheet_name]]
   write.table(
     blacklist,
     blacklist_file,
