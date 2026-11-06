@@ -22,8 +22,8 @@ validate(config, "schemas/config.schema.yaml")
 genome = config["genome"]
 
 # Load resources to be used in rules
-resources = Resources(genome, config["ensembl_genome_build"])
-resources_spike_in = Resources(
+resources = GenomeResources(genome, config["ensembl_genome_build"])
+resources_spike_in = GenomeResources(
     config["spike_in"]["genome"], config["spike_in"]["ensembl_genome_build"]
 )
 

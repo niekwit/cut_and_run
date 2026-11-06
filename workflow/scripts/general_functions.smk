@@ -2,7 +2,7 @@ import pandas as pd
 import os, re
 import glob
 import datetime
-from scripts.resources import Resources
+from scripts.resources import GenomeResources
 from snakemake.utils import min_version, validate
 from snakemake.logging import logger
 

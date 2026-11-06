@@ -1,7 +1,7 @@
 import os
 
 
-class Resources:
+class GenomeResources:
     """Gets URLs and file names of fasta and GTF files for a given genome and build"""
 
     # create genome directory
