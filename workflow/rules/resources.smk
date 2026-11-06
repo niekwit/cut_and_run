@@ -52,7 +52,8 @@ if config["remove_MT_seqs"]:
         shell:
             "awk '{{print $1}}' {input.fai} | "
             "grep -v '{params.mt}' | "
-            "xargs samtools faidx {input.fasta} > {output}"  # Print field with chromosome name
+            "xargs samtools faidx {input.fasta} > {output}"
+            # Print field with chromosome name
             # remove MT genome
             # create fasta without MT sequence
 
@@ -125,7 +126,9 @@ rule convert2ensembl:
     log:
         "logs/resources/convert_blacklist2ensembl.log",
     shell:
-        "sed 's/^chr//;s/\s/\t/g' {input} > {output} 2> {log}"
+        # Keep chrom/start/end only: name columns can contain spaces
+        "awk -v OFS='\\t' '{{sub(/^chr/, \"\", $1); print $1, $2, $3}}' "
+        "{input} > {output} 2> {log}"
 
 
 rule bowtie2_build:
