@@ -33,6 +33,7 @@ csv = pd.read_csv("config/samples.csv")
 # get wildcard values
 PAIRED_END = paired_end()
 SAMPLES = samples(PAIRED_END)
+DOWNSAMPLE = downsample_percentages()
 IP_SAMPLES, CONTROL_SAMPLES = ip_samples()
 CONDITIONS = conditions(include_controls=True)
 CONDITIONS_NO_CONTROL = conditions(include_controls=False)
@@ -42,6 +43,7 @@ fdr = peak_fdr(PEAK_MODE)
 
 # import rules
 include: "rules/fastqc.smk"
+include: "rules/downsample.smk"
 include: "rules/trimming.smk"
 include: "rules/resources.smk"
 include: "rules/mapping.smk"

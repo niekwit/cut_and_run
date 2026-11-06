@@ -3,7 +3,7 @@ if PAIRED_END:
 
         rule trim_galore_pe:
             input:
-                ["reads/{sample}_R1_001.fastq.gz", "reads/{sample}_R2_001.fastq.gz"],
+                trim_input,
             output:
                 fasta_fwd="results/trimmed/{sample}_val_1.fq.gz",
                 report_fwd="logs/trim_galore/{sample}_R1_trimming_report.txt",
@@ -23,7 +23,7 @@ if PAIRED_END:
 
         rule cutadapt_pe:
             input:
-                ["reads/{sample}_R1_001.fastq.gz", "reads/{sample}_R2_001.fastq.gz"],
+                trim_input,
             output:
                 fastq1="results/trimmed/{sample}_val_1.fq.gz",
                 fastq2="results/trimmed/{sample}_val_2.fq.gz",
@@ -44,7 +44,7 @@ else:
 
         rule trim_galore_se:
             input:
-                "reads/{sample}.fastq.gz",
+                trim_input,
             output:
                 fasta="results/trimmed/{sample}.fq.gz",
                 report="results/trimmed/report/{sample}_trimming_report.txt",
@@ -62,7 +62,7 @@ else:
 
         rule cutadapt_se:
             input:
-                "reads/{sample}.fastq.gz",
+                trim_input,
             output:
                 fastq="results/trimmed/{sample}.fq.gz",
                 qc="results/trimmed/{sample}.qc.txt",

@@ -32,6 +32,10 @@ properties:
     type: boolean
     description: Use Trim_galore instead of cutadapt
 
+  downsample_seed:
+    type: integer
+    description: Random seed for seqtk sample (downsampling set in config/downsample.csv)
+
   cutadapt:
     type: object
     properties:
@@ -400,6 +404,7 @@ required:
   - ensembl_genome_build
   - spike_in
   - use_trim_galore
+  - downsample_seed
   - cutadapt
   - remove_MT_seqs
   - bowtie2

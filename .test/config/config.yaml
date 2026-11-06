@@ -8,6 +8,7 @@ spike_in:
   ensembl_genome_build: 57
   normalisation: divide # bigwig normalisation method: divide or multiply
 use_trim_galore: False # Use Trim_galore instead of cutadapt
+downsample_seed: 42 # Seed for downsampling reads (per-sample % set in config/downsample.csv)
 cutadapt:
   a: ["AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"]
   A: []
