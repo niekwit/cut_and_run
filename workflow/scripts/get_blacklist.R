@@ -31,9 +31,11 @@ for (i in sheet_names) {
 }
 
 # Select the blacklist for the genome
-if (genome %in% sheet_names) {
+# (mm38/GRCm38 is the same assembly as the mm10 sheet)
+sheet_name <- if (genome == "mm38") "mm10" else genome
+if (sheet_name %in% sheet_names) {
   print(paste("Fetching", genome, "Cut & Run blacklist..."))
-  blacklist <- blacklists[[genome]]
+  blacklist <- blacklists[[sheet_name]]
   write.table(
     blacklist,
     blacklist_file,
@@ -48,5 +50,11 @@ if (genome %in% sheet_names) {
     "\nFetching ChIP-seq blacklist instead..."
   ))
   url <- snakemake@params[["url"]]
-  download.file(url, blacklist_file)
+  if (url == "") {
+    stop(paste("No blacklist available for", genome))
+  }
+  # ChIP-seq blacklists are gzipped: gzfile() reads both gzipped and plain files
+  tmp <- tempfile()
+  download.file(url, tmp)
+  writeLines(readLines(gzfile(tmp)), blacklist_file)
 }

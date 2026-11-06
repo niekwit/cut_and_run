@@ -18,6 +18,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     genome=resources.genome,
                     outdir=lambda wc, output: os.path.dirname(output[0]),
                     mode="narrow",
+                    paired_end=PAIRED_END,
                     qvalue=config["peak_calling"]["macs2"]["qvalue"],
                     control=control_available(),
                     csv=csv,
@@ -65,6 +66,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 params:
                     genome=resources.genome,
                     mode="narrow",
+                    paired_end=PAIRED_END,
                     qvalue=config["peak_calling"]["macs2"]["qvalue"],
                     control=control_available(),
                     csv=csv,
@@ -97,6 +99,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     genome=resources.genome,
                     outdir=lambda wc, output: os.path.dirname(output[0]),
                     mode="narrow",
+                    paired_end=PAIRED_END,
                     qvalue=config["peak_calling"]["macs2"]["qvalue"],
                     control=control_available(),
                     csv=csv,
@@ -113,9 +116,11 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
 
             rule macs2_narrow_replicates:
                 input:
-                    bams=expand("results/mapped/{ip_sample}.bam", ip_sample=IP_SAMPLES),
+                    bams=expand(
+                        "results/mapped/{ip_sample}.bl.bam", ip_sample=IP_SAMPLES
+                    ),
                     bais=expand(
-                        "results/mapped/{ip_sample}.bam.bai", ip_sample=IP_SAMPLES
+                        "results/mapped/{ip_sample}.bl.bam.bai", ip_sample=IP_SAMPLES
                     ),
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
@@ -134,6 +139,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 params:
                     genome=resources.genome,
                     mode="narrow",
+                    paired_end=PAIRED_END,
                     qvalue=config["peak_calling"]["macs2"]["qvalue"],
                     control=control_available(),
                     csv=csv,
@@ -150,26 +156,6 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     ),
                 script:
                     "../scripts/macs2_replicates.py"
-
-        rule peak_annotation_plots:
-            input:
-                bed=expand(
-                    f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.narrowPeak",
-                    conditions=CONDITIONS_NO_CONTROL,
-                ),
-                gtf=resources.gtf,
-            output:
-                dt=f"results/plots/macs2_narrow/fdr{fdr}/peaks_distance_to_TSS.pdf",
-                fd=f"results/plots/macs2_narrow/fdr{fdr}/peak_distributions.pdf",
-            log:
-                f"logs/plots/fdr{fdr}/peak_annotation_plots.log",
-            threads: config["resources"]["plotting"]["cpu"]
-            resources:
-                runtime=config["resources"]["plotting"]["time"],
-            conda:
-                "../envs/R.yaml"
-            script:
-                "../scripts/peak_annotation_plots.R"
 
     else:
         logger.info("MAC2S broad peak calling selected...")
@@ -206,67 +192,6 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 script:
                     "../scripts/macs2.py"
 
-            rule consensus_peaks:
-                input:
-                    beds=expand(
-                        f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.broadPeak",
-                        zip,
-                        ip_sample=IP_SAMPLES,
-                        control_sample=CONTROL_SAMPLES,
-                    ),
-                    chrom_sizes=f"resources/{resources.genome}_chrom.sizes",
-                output:
-                    bed_out_intermediate=expand(
-                        f"results/macs2_broad/fdr{fdr}/consensus_peaks/{{conditions}}.multi_intersect.bed",
-                        conditions=CONDITIONS_NO_CONTROL,
-                    ),
-                    bed_out=expand(
-                        f"results/macs2_broad/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
-                        conditions=CONDITIONS_NO_CONTROL,
-                    ),
-                params:
-                    max_size=config["peak_calling"]["macs2"]["consensus_peaks"][
-                        "max_size"
-                    ],
-                    extend_by=config["peak_calling"]["macs2"]["consensus_peaks"][
-                        "extend_by"
-                    ],
-                    keep=config["peak_calling"]["macs2"]["consensus_peaks"]["keep"],
-                    conditions=CONDITIONS_NO_CONTROL,
-                    extra="",
-                threads: config["resources"]["deeptools"]["cpu"]
-                resources:
-                    runtime=config["resources"]["deeptools"]["time"],
-                log:
-                    expand(
-                        f"logs/macs2_broad/fdr{fdr}/consensus_peaks/{{conditions}}.log",
-                        conditions=CONDITIONS_NO_CONTROL,
-                    ),
-                conda:
-                    "../envs/deeptools.yaml"
-                script:
-                    "../scripts/consensus_peaks.py"
-
-            rule peak_annotation_plots:
-                input:
-                    bed=expand(
-                        f"results/macs2_broad/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
-                        conditions=CONDITIONS_NO_CONTROL,
-                    ),
-                    gtf=resources.gtf,
-                output:
-                    dt=f"results/plots/macs2_broad/fdr{fdr}/peaks_distance_to_TSS.pdf",
-                    fd=f"results/plots/macs2_broad/fdr{fdr}/peak_distributions.pdf",
-                log:
-                    f"logs/plots/macs2_broad/fdr{fdr}/peak_annotation_plots.log",
-                threads: config["resources"]["deseq2"]["cpu"]
-                resources:
-                    runtime=config["resources"]["macs2"]["time"],
-                conda:
-                    "../envs/R.yaml"
-                script:
-                    "../scripts/peak_annotation_plots.R"
-
         else:
 
             rule macs2_broad:
@@ -285,6 +210,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     bc=config["peak_calling"]["macs2"]["broad_cutoff"],
                     control=control_available(),
                     mode="broad",
+                    paired_end=PAIRED_END,
                     extra=config["peak_calling"]["macs2"]["extra"],
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
@@ -321,6 +247,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                 params:
                     genome=resources.genome,
                     mode="broad",
+                    paired_end=PAIRED_END,
                     bc=config["peak_calling"]["macs2"]["broad_cutoff"],
                     qvalue=config["peak_calling"]["macs2"]["qvalue"],
                     control=control_available(),
@@ -333,11 +260,63 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../envs/peaks.yaml"
                 log:
                     expand(
-                        f"logs/macs2/narrow/fdr{fdr}/{{conditions}}.log",
+                        f"logs/macs2/broad/fdr{fdr}/{{conditions}}.log",
                         conditions=CONDITIONS_NO_CONTROL,
                     ),
                 script:
                     "../scripts/macs2_replicates.py"
+
+    rule consensus_peaks:
+        input:
+            beds=macs2_sample_peaks(),
+            chrom_sizes=f"resources/{resources.genome}_chrom.sizes",
+        output:
+            bed_out_intermediate=expand(
+                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.multi_intersect.bed",
+                conditions=CONDITIONS_NO_CONTROL,
+            ),
+            bed_out=expand(
+                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
+                conditions=CONDITIONS_NO_CONTROL,
+            ),
+        params:
+            max_size=config["peak_calling"]["macs2"]["consensus_peaks"]["max_size"],
+            extend_by=config["peak_calling"]["macs2"]["consensus_peaks"]["extend_by"],
+            keep=config["peak_calling"]["macs2"]["consensus_peaks"]["keep"],
+            conditions=CONDITIONS_NO_CONTROL,
+            extra="",
+        threads: config["resources"]["deeptools"]["cpu"]
+        resources:
+            runtime=config["resources"]["deeptools"]["time"],
+        log:
+            expand(
+                f"logs/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.log",
+                conditions=CONDITIONS_NO_CONTROL,
+            ),
+        conda:
+            "../envs/deeptools.yaml"
+        script:
+            "../scripts/consensus_peaks.py"
+
+    rule peak_annotation_plots:
+        input:
+            bed=expand(
+                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{conditions}}.bed",
+                conditions=CONDITIONS_NO_CONTROL,
+            ),
+            gtf=resources.gtf,
+        output:
+            dt=f"results/plots/{PEAK_MODE}/fdr{fdr}/peaks_distance_to_TSS.pdf",
+            fd=f"results/plots/{PEAK_MODE}/fdr{fdr}/peak_distributions.pdf",
+        log:
+            f"logs/plots/{PEAK_MODE}/fdr{fdr}/peak_annotation_plots.log",
+        threads: config["resources"]["plotting"]["cpu"]
+        resources:
+            runtime=config["resources"]["plotting"]["time"],
+        conda:
+            "../envs/R.yaml"
+        script:
+            "../scripts/peak_annotation_plots.R"
 
     rule annotate_peaks:
         input:

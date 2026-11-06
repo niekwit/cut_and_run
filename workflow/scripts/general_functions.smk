@@ -2,7 +2,7 @@ import pandas as pd
 import os, re
 import glob
 import datetime
-from scripts.resources import Resources
+from scripts.resources import GenomeResources
 from snakemake.utils import min_version, validate
 from snakemake.logging import logger
 
@@ -108,15 +108,15 @@ def targets():
                 TARGETS.extend(
                     [
                         expand(
-                            f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
+                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
                             ip_sample=IP_SAMPLES,
                         ),
                         expand(
-                            f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
+                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
                             ip_sample=IP_SAMPLES,
                         ),
                         expand(
-                            f"results/macs2_narrow/{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed",
+                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed",
                             ip_sample=IP_SAMPLES,
                         ),
                     ]
@@ -214,6 +214,87 @@ def control_available():
         return True
     except KeyError:
         return False
+
+
+def downsample_percentages():
+    """
+    Reads optional config/downsample.csv and returns a dictionary with the
+    percentage of reads to keep for each sample that should be downsampled.
+    Samples not in the file or set to 100 are not downsampled.
+    """
+    file = "config/downsample.csv"
+    if not os.path.isfile(file):
+        return {}
+
+    df = pd.read_csv(file)
+    for col in ["sample", "percentage"]:
+        if col not in df.columns:
+            raise ValueError(f"{file} must contain a '{col}' column")
+
+    # Check if all samples are IP or control samples
+    unknown = [s for s in df["sample"] if s not in SAMPLES]
+    if len(unknown) != 0:
+        unknown = "\n".join(unknown)
+        raise ValueError(
+            f"Following samples in {file} are not in samples.csv:\n{unknown}"
+        )
+
+    # Check for duplicate samples
+    duplicated = df.loc[df["sample"].duplicated(), "sample"].tolist()
+    if len(duplicated) != 0:
+        duplicated = "\n".join(duplicated)
+        raise ValueError(
+            f"Following samples are listed more than once in {file}:\n{duplicated}"
+        )
+
+    # Check if percentages are numbers between 0 (exclusive) and 100 (inclusive)
+    percentages = pd.to_numeric(df["percentage"], errors="coerce")
+    wrong = df.loc[
+        percentages.isna() | (percentages <= 0) | (percentages > 100), "sample"
+    ].tolist()
+    if len(wrong) != 0:
+        wrong = "\n".join(wrong)
+        raise ValueError(
+            f"Following samples in {file} do not have a percentage between 0 and 100:\n{wrong}"
+        )
+
+    return {s: float(p) for s, p in zip(df["sample"], percentages) if p < 100}
+
+
+def trim_input(wildcards):
+    """
+    Returns input fastq file(s) for trimming rules: downsampled reads if the
+    sample is set in config/downsample.csv, otherwise the raw reads.
+    """
+    if wildcards.sample in DOWNSAMPLE:
+        dir_ = "results/downsampled"
+    else:
+        dir_ = "reads"
+
+    if PAIRED_END:
+        return [
+            f"{dir_}/{wildcards.sample}_R1_001.fastq.gz",
+            f"{dir_}/{wildcards.sample}_R2_001.fastq.gz",
+        ]
+    return f"{dir_}/{wildcards.sample}.fastq.gz"
+
+
+def macs2_sample_peaks():
+    """
+    Returns per-sample MACS2 peak files for the selected peak calling mode
+    """
+    ext = "narrowPeak" if PEAK_MODE == "macs2_narrow" else "broadPeak"
+    if control_available():
+        return expand(
+            f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.{ext}",
+            zip,
+            ip_sample=IP_SAMPLES,
+            control_sample=CONTROL_SAMPLES,
+        )
+    return expand(
+        f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.{ext}",
+        ip_sample=IP_SAMPLES,
+    )
 
 
 def cutadapt_args(config, param):
@@ -377,9 +458,9 @@ def run_diffbind():
         if len(references) > 1 and "yes" in references:
             return True
         else:
-            False
+            return False
     else:
-        False
+        return False
 
 
 def mitochondrial_genome_name():

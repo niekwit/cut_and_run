@@ -7,7 +7,7 @@ type: object
 properties:
   genome:
     type: string
-    enum: ["hg38", "hg19", "mm39", "mm38", "dm3", "dm6"]
+    enum: ["hg38", "hg19", "mm39", "mm38", "dm6"]
     description: Ensembl genome
 
   ensembl_genome_build:
@@ -31,6 +31,11 @@ properties:
   use_trim_galore:
     type: boolean
     description: Use Trim_galore instead of cutadapt
+
+  downsample_seed:
+    type: integer
+    default: 42
+    description: Random seed for seqtk sample (downsampling set in config/downsample.csv)
 
   cutadapt:
     type: object
