@@ -39,8 +39,14 @@ CONDITIONS = conditions(include_controls=True)
 CONDITIONS_NO_CONTROL = conditions(include_controls=False)
 SAMPLE_CONDITIONS = sample_conditions()  # genotype_treatment_factor of each IP sample
 CONSENSUS_CONDITIONS = sorted(set(SAMPLE_CONDITIONS.values()))
-PEAK_MODE = peak_mode()
-fdr = peak_fdr(PEAK_MODE)
+SAMPLE_PEAK_MODES = sample_peak_modes()  # macs2_narrow/macs2_broad of each IP sample
+PEAK_MODES = sorted(set(SAMPLE_PEAK_MODES.values()))
+FDRS = {m: peak_fdrs(m) for m in PEAK_MODES}  # FDR cutoffs per peak calling mode
+
+
+wildcard_constraints:
+    peak_mode=regex(PEAK_MODES),
+    fdr=regex(set(f for fdrs in FDRS.values() for f in fdrs)),
 
 
 # import rules

@@ -1,6 +1,8 @@
 if config["peak_calling"]["macs2"]["use_macs2"]:
-    if not config["peak_calling"]["macs2"]["broad"]:
-        logger.info("MAC2S narrow peak calling selected...")
+    # Narrow and/or broad peak calling, depending on the macs2 column of
+    # samples.csv (or peak_calling:macs2:broad in config.yaml)
+    if "macs2_narrow" in PEAK_MODES:
+        logger.info("MACS2 narrow peak calling selected...")
         if control_available():
 
             rule macs2_narrow:
@@ -11,25 +13,28 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     cbais="results/mapped/{control_sample}.bl.bam.bai",
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
-                    xls=f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls",
-                    peak=f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.narrowPeak",
-                    bed=f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_summits.bed",
+                    xls=f"results/macs2_narrow/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls",
+                    peak=f"results/macs2_narrow/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.narrowPeak",
+                    bed=f"results/macs2_narrow/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_summits.bed",
                 params:
                     genome=resources.genome,
                     outdir=lambda wc, output: os.path.dirname(output[0]),
                     mode="narrow",
                     paired_end=PAIRED_END,
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    qvalue=lambda wildcards: wildcards.fdr,
                     control=control_available(),
                     csv=csv,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    ip_sample=regex(mode_samples("macs2_narrow")[0]),
+                    fdr=regex(FDRS["macs2_narrow"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"],
                 conda:
                     "../envs/peaks.yaml"
                 log:
-                    f"logs/macs2/narrow/fdr{fdr}/{{ip_sample}}_vs_{{control_sample}}.log",
+                    f"logs/macs2/narrow/fdr{{fdr}}/{{ip_sample}}_vs_{{control_sample}}.log",
                 script:
                     "../scripts/macs2.py"
 
@@ -52,25 +57,30 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
                     xls=expand(
-                        f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls",
+                        f"results/macs2_narrow/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.xls",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                     peak=expand(
-                        f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.narrowPeak",
+                        f"results/macs2_narrow/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.narrowPeak",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                     bed=expand(
-                        f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_summits.bed",
+                        f"results/macs2_narrow/fdr{{fdr}}/{{conditions}}/{{conditions}}_summits.bed",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                 params:
                     genome=resources.genome,
                     mode="narrow",
                     paired_end=PAIRED_END,
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    qvalue=lambda wildcards: wildcards.fdr,
                     control=control_available(),
                     csv=csv,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    fdr=regex(FDRS["macs2_narrow"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"] * 4,
@@ -78,8 +88,9 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../envs/peaks.yaml"
                 log:
                     expand(
-                        f"logs/macs2/narrow/fdr{fdr}/{{conditions}}.log",
+                        f"logs/macs2/narrow/fdr{{fdr}}/{{conditions}}.log",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                 script:
                     "../scripts/macs2_replicates.py"
@@ -92,25 +103,28 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     bai="results/mapped/{ip_sample}.bl.bam.bai",
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
-                    xls=f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
-                    peak=f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
-                    bed=f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed",
+                    xls=f"results/macs2_narrow/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
+                    peak=f"results/macs2_narrow/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
+                    bed=f"results/macs2_narrow/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_summits.bed",
                 params:
                     genome=resources.genome,
                     outdir=lambda wc, output: os.path.dirname(output[0]),
                     mode="narrow",
                     paired_end=PAIRED_END,
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    qvalue=lambda wildcards: wildcards.fdr,
                     control=control_available(),
                     csv=csv,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    ip_sample=regex(mode_samples("macs2_narrow")[0]),
+                    fdr=regex(FDRS["macs2_narrow"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"],
                 conda:
                     "../envs/peaks.yaml"
                 log:
-                    f"logs/macs2/narrow/fdr{fdr}/{{ip_sample}}.log",
+                    f"logs/macs2/narrow/fdr{{fdr}}/{{ip_sample}}.log",
                 script:
                     "../scripts/macs2.py"
 
@@ -125,25 +139,30 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
                     xls=expand(
-                        f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls",
+                        f"results/macs2_narrow/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.xls",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                     peak=expand(
-                        f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.narrowPeak",
+                        f"results/macs2_narrow/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.narrowPeak",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                     bed=expand(
-                        f"results/macs2_narrow/fdr{fdr}/{{conditions}}/{{conditions}}_summits.bed",
+                        f"results/macs2_narrow/fdr{{fdr}}/{{conditions}}/{{conditions}}_summits.bed",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                 params:
                     genome=resources.genome,
                     mode="narrow",
                     paired_end=PAIRED_END,
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    qvalue=lambda wildcards: wildcards.fdr,
                     control=control_available(),
                     csv=csv,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    fdr=regex(FDRS["macs2_narrow"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"] * 4,
@@ -151,14 +170,15 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../envs/peaks.yaml"
                 log:
                     expand(
-                        f"logs/macs2/narrow/fdr{fdr}/{{conditions}}.log",
+                        f"logs/macs2/narrow/fdr{{fdr}}/{{conditions}}.log",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                 script:
                     "../scripts/macs2_replicates.py"
 
-    else:
-        logger.info("MAC2S broad peak calling selected...")
+    if "macs2_broad" in PEAK_MODES:
+        logger.info("MACS2 broad peak calling selected...")
         if control_available():
             logger.info("Control samples found...")
 
@@ -170,25 +190,28 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     cbais="results/mapped/{control_sample}.bl.bam.bai",
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
-                    xls=f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls",
-                    peak=f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.broadPeak",
-                    gapped=f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.gappedPeak",
+                    xls=f"results/macs2_broad/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls",
+                    peak=f"results/macs2_broad/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.broadPeak",
+                    gapped=f"results/macs2_broad/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.gappedPeak",
                 params:
                     genome=resources.genome,
                     outdir=lambda wc, output: os.path.dirname(output[0]),
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
-                    bc=config["peak_calling"]["macs2"]["broad_cutoff"],
+                    qvalue=broad_qvalue(),
+                    bc=lambda wildcards: wildcards.fdr,
                     control=control_available(),
                     mode="broad",
                     paired_end=PAIRED_END,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    ip_sample=regex(mode_samples("macs2_broad")[0]),
+                    fdr=regex(FDRS["macs2_broad"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"],
                 conda:
                     "../envs/peaks.yaml"
                 log:
-                    f"logs/macs2/broad/fdr{fdr}/{{ip_sample}}_vs_{{control_sample}}.log",
+                    f"logs/macs2/broad/fdr{{fdr}}/{{ip_sample}}_vs_{{control_sample}}.log",
                 script:
                     "../scripts/macs2.py"
 
@@ -200,25 +223,28 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     bai="results/mapped/{ip_sample}.bl.bam.bai",
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
-                    xls=f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
-                    peak=f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.broadPeak",
-                    gapped=f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.gappedPeak",
+                    xls=f"results/macs2_broad/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
+                    peak=f"results/macs2_broad/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_peaks.broadPeak",
+                    gapped=f"results/macs2_broad/fdr{{fdr}}/{{ip_sample}}/{{ip_sample}}_peaks.gappedPeak",
                 params:
                     genome=resources.genome,
                     outdir=lambda wc, output: os.path.dirname(output[0]),
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
-                    bc=config["peak_calling"]["macs2"]["broad_cutoff"],
+                    qvalue=broad_qvalue(),
+                    bc=lambda wildcards: wildcards.fdr,
                     control=control_available(),
                     mode="broad",
                     paired_end=PAIRED_END,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    ip_sample=regex(mode_samples("macs2_broad")[0]),
+                    fdr=regex(FDRS["macs2_broad"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"],
                 conda:
                     "../envs/peaks.yaml"
                 log:
-                    f"logs/macs2/broad/fdr{fdr}/{{ip_sample}}.log",
+                    f"logs/macs2/broad/fdr{{fdr}}/{{ip_sample}}.log",
                 script:
                     "../scripts/macs2.py"
 
@@ -233,26 +259,31 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     egs="results/effective_genome_sizes/effective_genome_sizes.csv",
                 output:
                     xls=expand(
-                        f"results/macs2_broad/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.xls",
+                        f"results/macs2_broad/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.xls",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                     peak=expand(
-                        f"results/macs2_broad/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.broadPeak",
+                        f"results/macs2_broad/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.broadPeak",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                     gapped=expand(
-                        f"results/macs2_broad/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.gappedPeak",
+                        f"results/macs2_broad/fdr{{fdr}}/{{conditions}}/{{conditions}}_peaks.gappedPeak",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                 params:
                     genome=resources.genome,
                     mode="broad",
                     paired_end=PAIRED_END,
-                    bc=config["peak_calling"]["macs2"]["broad_cutoff"],
-                    qvalue=config["peak_calling"]["macs2"]["qvalue"],
+                    bc=lambda wildcards: wildcards.fdr,
+                    qvalue=broad_qvalue(),
                     control=control_available(),
                     csv=csv,
                     extra=config["peak_calling"]["macs2"]["extra"],
+                wildcard_constraints:
+                    fdr=regex(FDRS["macs2_broad"]),
                 threads: config["resources"]["macs2"]["cpu"]
                 resources:
                     runtime=config["resources"]["macs2"]["time"] * 4,
@@ -260,8 +291,9 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
                     "../envs/peaks.yaml"
                 log:
                     expand(
-                        f"logs/macs2/broad/fdr{fdr}/{{conditions}}.log",
+                        f"logs/macs2/broad/fdr{{fdr}}/{{conditions}}.log",
                         conditions=CONDITIONS_NO_CONTROL,
+                        allow_missing=True,
                     ),
                 script:
                     "../scripts/macs2_replicates.py"
@@ -271,8 +303,8 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
             beds=consensus_beds,
             chrom_sizes=f"resources/{resources.genome}_chrom.sizes",
         output:
-            bed_out_intermediate=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.multi_intersect.bed",
-            bed_out=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.bed",
+            bed_out_intermediate=f"results/{{peak_mode}}/fdr{{fdr}}/consensus_peaks/{{condition}}.multi_intersect.bed",
+            bed_out=f"results/{{peak_mode}}/fdr{{fdr}}/consensus_peaks/{{condition}}.bed",
         params:
             max_size=config["peak_calling"]["macs2"]["consensus_peaks"]["max_size"],
             extend_by=config["peak_calling"]["macs2"]["consensus_peaks"]["extend_by"],
@@ -284,7 +316,7 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
         resources:
             runtime=config["resources"]["deeptools"]["time"],
         log:
-            f"logs/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.log",
+            f"logs/{{peak_mode}}/fdr{{fdr}}/consensus_peaks/{{condition}}.log",
         conda:
             "../envs/deeptools.yaml"
         script:
@@ -292,16 +324,13 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
 
     rule peak_annotation_plots:
         input:
-            bed=expand(
-                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.bed",
-                condition=CONSENSUS_CONDITIONS,
-            ),
+            bed=annotation_plot_beds,
             gtf=resources.gtf,
         output:
-            dt=f"results/plots/{PEAK_MODE}/fdr{fdr}/peaks_distance_to_TSS.pdf",
-            fd=f"results/plots/{PEAK_MODE}/fdr{fdr}/peak_distributions.pdf",
+            dt=f"results/plots/{{peak_mode}}/fdr{{fdr}}/peaks_distance_to_TSS.pdf",
+            fd=f"results/plots/{{peak_mode}}/fdr{{fdr}}/peak_distributions.pdf",
         log:
-            f"logs/plots/{PEAK_MODE}/fdr{fdr}/peak_annotation_plots.log",
+            f"logs/plots/{{peak_mode}}/fdr{{fdr}}/peak_annotation_plots.log",
         threads: config["resources"]["plotting"]["cpu"]
         resources:
             runtime=config["resources"]["plotting"]["time"],
@@ -312,18 +341,18 @@ if config["peak_calling"]["macs2"]["use_macs2"]:
 
     rule annotate_peaks:
         input:
-            bed=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.bed",
+            bed=f"results/{{peak_mode}}/fdr{{fdr}}/consensus_peaks/{{condition}}.bed",
             edb=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
             txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
         output:
-            txt=f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.annotated.peaks.txt",
+            txt=f"results/{{peak_mode}}/fdr{{fdr}}/consensus_peaks/{{condition}}.annotated.peaks.txt",
         params:
             gtf=resources.gtf,
         threads: config["resources"]["deeptools"]["cpu"]
         resources:
             runtime=config["resources"]["deeptools"]["time"],
         log:
-            f"logs/annotate_peaks/{PEAK_MODE}/fdr{fdr}/{{condition}}.log",
+            f"logs/annotate_peaks/{{peak_mode}}/fdr{{fdr}}/{{condition}}.log",
         conda:
             "../envs/diffbind.yaml"
         script:

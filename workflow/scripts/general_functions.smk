@@ -23,122 +23,28 @@ def targets():
     ]
 
     ### Add conditional targets
-    # Peak calling:
-    # there is a lot of redundancy in the peak calling targets code but
-    # it was very tricky to make a general function for this, optimise later?
+    # Peak calling (per peak calling mode and FDR cutoff)
     if config["peak_calling"]["macs2"]["use_macs2"]:
-        if config["peak_calling"]["macs2"]["broad"]:
-            TARGETS.extend(
-                [
-                    f"results/plots/macs2_broad/fdr{fdr}/peaks_distance_to_TSS.pdf",
-                    f"results/plots/macs2_broad/fdr{fdr}/peak_distributions.pdf",
-                ]
-            )
-            if control_available():
-                TARGETS.extend(
-                    [
-                        expand(
-                            f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls",
-                            zip,
-                            ip_sample=IP_SAMPLES,
-                            control_sample=CONTROL_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.broadPeak",
-                            zip,
-                            ip_sample=IP_SAMPLES,
-                            control_sample=CONTROL_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.gappedPeak",
-                            zip,
-                            ip_sample=IP_SAMPLES,
-                            control_sample=CONTROL_SAMPLES,
-                        ),
-                    ]
-                )
+        for peak_mode in PEAK_MODES:
+            if peak_mode == "macs2_narrow":
+                suffixes = ["peaks.xls", "peaks.narrowPeak", "summits.bed"]
             else:
+                suffixes = ["peaks.xls", "peaks.broadPeak", "peaks.gappedPeak"]
+            for fdr in FDRS[peak_mode]:
+                for suffix in suffixes:
+                    TARGETS.extend(macs2_sample_files(peak_mode, fdr, suffix))
                 TARGETS.extend(
                     [
-                        expand(
-                            f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
-                            ip_sample=IP_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.broadPeak",
-                            ip_sample=IP_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_broad/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.gappedPeak",
-                            ip_sample=IP_SAMPLES,
-                        ),
+                        f"results/plots/{peak_mode}/fdr{fdr}/peaks_distance_to_TSS.pdf",
+                        f"results/plots/{peak_mode}/fdr{fdr}/peak_distributions.pdf",
                     ]
                 )
-        else:
-            TARGETS.extend(
-                [
-                    f"results/plots/macs2_narrow/fdr{fdr}/peaks_distance_to_TSS.pdf",
-                    f"results/plots/macs2_narrow/fdr{fdr}/peak_distributions.pdf",
-                ]
-            )
-            if control_available():
                 TARGETS.extend(
-                    [
-                        expand(
-                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.xls",
-                            zip,
-                            ip_sample=IP_SAMPLES,
-                            control_sample=CONTROL_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.narrowPeak",
-                            zip,
-                            ip_sample=IP_SAMPLES,
-                            control_sample=CONTROL_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_summits.bed",
-                            zip,
-                            ip_sample=IP_SAMPLES,
-                            control_sample=CONTROL_SAMPLES,
-                        ),
-                    ]
+                    expand(
+                        f"results/{peak_mode}/fdr{fdr}/consensus_peaks/{{condition}}.annotated.peaks.txt",
+                        condition=mode_conditions(peak_mode),
+                    )
                 )
-            else:
-                TARGETS.extend(
-                    [
-                        expand(
-                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.xls",
-                            ip_sample=IP_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.narrowPeak",
-                            ip_sample=IP_SAMPLES,
-                        ),
-                        expand(
-                            f"results/macs2_narrow/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_summits.bed",
-                            ip_sample=IP_SAMPLES,
-                        ),
-                    ]
-                )
-        # TARGETS.extend(
-        #    [
-        #        expand(
-        #            f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_peaks.bed",
-        #            conditions=CONDITIONS_NO_CONTROL,
-        #        ),
-        #        expand(
-        #            f"results/{PEAK_MODE}/fdr{fdr}/{{conditions}}/{{conditions}}_annotated.peaks.txt",
-        #            conditions=CONDITIONS_NO_CONTROL,
-        #        ),
-        #    ]
-        # )
-        TARGETS.extend(
-            expand(
-                f"results/{PEAK_MODE}/fdr{fdr}/consensus_peaks/{{condition}}.annotated.peaks.txt",
-                condition=CONSENSUS_CONDITIONS,
-            )
-        )
     elif config["peak_calling"]["htseq_count"]["use_htseq_count"]:
         TARGETS.extend(
             [
@@ -279,22 +185,103 @@ def trim_input(wildcards):
     return f"{dir_}/{wildcards.sample}.fastq.gz"
 
 
-def macs2_sample_peaks():
+def regex(values):
     """
-    Returns per-sample MACS2 peak files for the selected peak calling mode
+    Returns a regular expression that only matches the given values exactly
+    (for wildcard constraints)
     """
-    ext = "narrowPeak" if PEAK_MODE == "macs2_narrow" else "broadPeak"
+    return "|".join(re.escape(str(v)) for v in values)
+
+
+def mode_samples(peak_mode):
+    """
+    Returns the IP samples and their matching control samples (empty list
+    without controls) that use the given MACS2 peak calling mode
+    """
+    ips = [s for s in IP_SAMPLES if SAMPLE_PEAK_MODES[s] == peak_mode]
+    controls = [
+        c
+        for s, c in zip(IP_SAMPLES, CONTROL_SAMPLES)
+        if SAMPLE_PEAK_MODES[s] == peak_mode
+    ]
+    return ips, controls
+
+
+def mode_conditions(peak_mode):
+    """
+    Returns the consensus peak conditions of the IP samples that use the given
+    MACS2 peak calling mode
+    """
+    ips, _ = mode_samples(peak_mode)
+    return sorted(set(SAMPLE_CONDITIONS[s] for s in ips))
+
+
+def macs2_sample_files(peak_mode, fdr, suffix):
+    """
+    Returns per-sample MACS2 output files with the given suffix
+    (e.g. peaks.narrowPeak) for the given peak calling mode and FDR cutoff
+    """
+    ips, controls = mode_samples(peak_mode)
     if control_available():
         return expand(
-            f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_peaks.{ext}",
+            f"results/{peak_mode}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_vs_{{control_sample}}_{suffix}",
             zip,
-            ip_sample=IP_SAMPLES,
-            control_sample=CONTROL_SAMPLES,
+            ip_sample=ips,
+            control_sample=controls,
         )
     return expand(
-        f"results/{PEAK_MODE}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_peaks.{ext}",
-        ip_sample=IP_SAMPLES,
+        f"results/{peak_mode}/fdr{fdr}/{{ip_sample}}/{{ip_sample}}_{suffix}",
+        ip_sample=ips,
     )
+
+
+def macs2_sample_peaks(peak_mode, fdr):
+    """
+    Returns per-sample MACS2 peak files for the given peak calling mode
+    and FDR cutoff
+    """
+    ext = "narrowPeak" if peak_mode == "macs2_narrow" else "broadPeak"
+    return macs2_sample_files(peak_mode, fdr, f"peaks.{ext}")
+
+
+def sample_peak_modes():
+    """
+    Returns a dictionary with the MACS2 peak calling mode of each IP sample
+    (macs2_narrow or macs2_broad), read from the optional macs2 column
+    (narrow/broad) of samples.csv. Without this column, the
+    peak_calling:macs2:broad setting in config.yaml is used for all samples.
+    """
+    df = pd.read_csv("config/samples.csv", dtype=str, keep_default_na=False)
+
+    if "macs2" not in df.columns:
+        default = "broad" if config["peak_calling"]["macs2"]["broad"] else "narrow"
+        return {s: f"macs2_{default}" for s in df["sample"]}
+
+    modes = {}
+    wrong = []
+    for row in df.itertuples():
+        mode = row.macs2.strip().lower()
+        if mode not in ["narrow", "broad"]:
+            wrong.append(f"{row.sample}: '{row.macs2}'")
+        modes[row.sample] = f"macs2_{mode}"
+    if wrong:
+        wrong = "\n".join(wrong)
+        raise ValueError(
+            f"macs2 column in samples.csv must be narrow or broad:\n{wrong}"
+        )
+
+    # All samples of a factor must use the same mode
+    df["mode"] = [modes[s] for s in df["sample"]]
+    mixed = [
+        factor for factor, group in df.groupby("factor") if group["mode"].nunique() > 1
+    ]
+    if mixed:
+        raise ValueError(
+            "Following factors have both narrow and broad in the macs2 column "
+            f"of samples.csv: {', '.join(mixed)}"
+        )
+
+    return modes
 
 
 def sample_conditions():
@@ -339,14 +326,27 @@ def sample_conditions():
 def consensus_beds(wildcards):
     """
     Returns the MACS2 peak files of all IP samples that belong to the
-    condition of the consensus peaks rule (exact match on genotype_treatment_factor)
+    condition (exact match on genotype_treatment_factor) and peak calling mode
+    of the consensus peaks rule
     """
-    beds = macs2_sample_peaks()
+    ips, _ = mode_samples(wildcards.peak_mode)
+    beds = macs2_sample_peaks(wildcards.peak_mode, wildcards.fdr)
     return [
         bed
-        for ip_sample, bed in zip(IP_SAMPLES, beds)
+        for ip_sample, bed in zip(ips, beds)
         if SAMPLE_CONDITIONS[ip_sample] == wildcards.condition
     ]
+
+
+def annotation_plot_beds(wildcards):
+    """
+    Returns the consensus peak files of all conditions of the peak calling
+    mode and FDR cutoff of the peak annotation plots rule
+    """
+    return expand(
+        f"results/{wildcards.peak_mode}/fdr{wildcards.fdr}/consensus_peaks/{{condition}}.bed",
+        condition=mode_conditions(wildcards.peak_mode),
+    )
 
 
 def cutadapt_args(config, param):
@@ -540,21 +540,31 @@ def calculate_effective_genome_sizes_input():
     return _dict
 
 
-def peak_mode():
+def peak_fdrs(peak_mode):
     """
-    Returns MACS2 peak calling mode as string based on config file
+    Returns the MACS2 FDR cutoffs (fdr wildcard values) as strings:
+    qvalue for narrow peaks and broad_cutoff for broad peaks.
+    Each can be a single number or a list of numbers in config.yaml.
     """
-    if config["peak_calling"]["macs2"]["broad"]:
-        return "macs2_broad"
-    else:
-        return "macs2_narrow"
+    key = "qvalue" if peak_mode == "macs2_narrow" else "broad_cutoff"
+    values = config["peak_calling"]["macs2"][key]
+    if not isinstance(values, list):
+        values = [values]
+
+    fdrs = [str(v) for v in values]
+    duplicates = sorted(set(f for f in fdrs if fdrs.count(f) > 1))
+    if duplicates:
+        raise ValueError(f"Duplicate MACS2 {key} cutoffs in config: {duplicates}")
+    return fdrs
 
 
-def peak_fdr(type_):
-    if type_ == "macs2_narrow":
-        return config["peak_calling"]["macs2"]["qvalue"]
-    elif type_ == "macs2_broad":
-        return config["peak_calling"]["macs2"]["broad_cutoff"]
+def broad_qvalue():
+    """
+    Returns the MACS2 qvalue used together with the broad cutoff for broad
+    peaks: the strictest (smallest) value if qvalue is a list
+    """
+    qvalue = config["peak_calling"]["macs2"]["qvalue"]
+    return min(qvalue) if isinstance(qvalue, list) else qvalue
 
 
 def paired_end():

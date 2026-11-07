@@ -22,6 +22,12 @@ jobs:
 
   Linting:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Minimum supported version and latest release
+        snakemake-version: ["8.25.5", "*"]
+    name: Linting (Snakemake ${{ matrix.snakemake-version == '*' && 'latest' || matrix.snakemake-version }})
     steps:
     - uses: actions/checkout@v2
     - name: Lint workflow
@@ -30,7 +36,7 @@ jobs:
         directory: .test
         snakefile: workflow/Snakefile
         args: "--lint"
-        snakemake-version: "8.25.5"
+        snakemake-version: ${{ matrix.snakemake-version }}
 
   Testing:
     runs-on: ubuntu-latest

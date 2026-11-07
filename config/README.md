@@ -16,6 +16,8 @@ The condition of each IP sample is `{genotype}_{treatment}_{factor}`; consensus 
 
 `control`: (optional) name of the matched IgG/input sample
 
+`macs2`: (optional) MACS2 peak calling mode, `narrow` or `broad` (same for all samples of a factor); without this column, `peak_calling:macs2:broad` in config.yaml is used
+
 `reference`: `yes` for the reference condition (reserved for DiffBind, not currently run)
 
 # downsample.csv (optional)

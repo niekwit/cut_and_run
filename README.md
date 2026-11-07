@@ -108,15 +108,18 @@ Describe your samples in `config/samples.csv`. Required columns:
 | `treatment` | Treatment condition (`None` if untreated)                                               |
 | `factor`    | Antibody target or `IgG`/`input` for controls                                           |
 | `control`   | _(optional)_ Name of the matched control sample (IgG/input) for peak calling            |
+| `macs2`     | _(optional)_ MACS2 peak calling mode, `narrow` or `broad`. Must be the same for all samples of a factor. Without this column, `peak_calling.macs2.broad` in `config.yaml` sets the mode for all samples |
 | `batch`     | _(optional)_ Numerical batch identifier (reserved for DiffBind, not currently run)      |
 | `reference` | _(optional)_ `yes` for the reference condition (reserved for DiffBind, not currently run) |
 
 Example:
 
-| sample       | genotype | treatment | factor  | control  |
-| ------------ | -------- | --------- | ------- | -------- |
-| WT_H3K4me3_1 | WT       | None      | H3K4me3 | WT_IgG_1 |
-| WT_H3K4me3_2 | WT       | None      | H3K4me3 | WT_IgG_2 |
+| sample        | genotype | treatment | factor   | control  | macs2  |
+| ------------- | -------- | --------- | -------- | -------- | ------ |
+| WT_H3K4me3_1  | WT       | None      | H3K4me3  | WT_IgG_1 | narrow |
+| WT_H3K4me3_2  | WT       | None      | H3K4me3  | WT_IgG_2 | narrow |
+| WT_H3K27me3_1 | WT       | None      | H3K27me3 | WT_IgG_1 | broad  |
+| WT_H3K27me3_2 | WT       | None      | H3K27me3 | WT_IgG_2 | broad  |
 
 The condition of each IP sample is `{genotype}_{treatment}_{factor}` (e.g. `WT_None_H3K4me3`). Consensus peaks are made from the replicates of each condition and written to `consensus_peaks/{genotype}_{treatment}_{factor}.bed`.
 
@@ -155,8 +158,9 @@ Key settings to adjust before running:
 | `deeptools.bigwig.normalisation`           | BigWig normalisation (`RPKM`, `CPM`, `BPM`, `RPGC`, `None`)     | `RPKM`            |
 | `deeptools.matrix.mode`                    | computeMatrix mode: `scale-regions` or `reference-point`        | `scale-regions`   |
 | `peak_calling.macs2.use_macs2`             | Enable MACS2 peak calling                                       | `True`            |
-| `peak_calling.macs2.broad`                 | Call broad peaks (e.g. for H3K27me3)                            | `False`           |
-| `peak_calling.macs2.qvalue`                | MACS2 q-value cutoff for narrow peaks                           | `0.05`            |
+| `peak_calling.macs2.broad`                 | Call broad peaks (e.g. for H3K27me3) for all samples; ignored if samples.csv has a `macs2` column | `False` |
+| `peak_calling.macs2.qvalue`                | MACS2 q-value cutoff(s) for narrow peaks; a list (e.g. `[0.01, 0.05]`) runs peak calling once per cutoff | `[0.05]` |
+| `peak_calling.macs2.broad_cutoff`          | MACS2 broad cutoff(s) for broad peaks; a list runs peak calling once per cutoff. Broad peak calling uses the smallest `qvalue` | `[0.1]` |
 | `peak_calling.htseq_count.use_htseq_count` | Enable HTSeq-count + DESeq2 instead of MACS2                    | `False`           |
 | `resources.*`                              | CPUs and walltime (minutes) per rule                            | see `config.yaml` |
 
@@ -192,8 +196,10 @@ Set `spike_in.apply_spike_in: True` and provide the spike-in genome identifier a
 
 ### Peak calling modes
 
-- **MACS2 narrow** (`broad: False`): for transcription factors.
-- **MACS2 broad** (`broad: True`): for broad histone marks (e.g. H3K27me3).
+- **MACS2 narrow** (`narrow` in the `macs2` column of `samples.csv`, or `broad: False`): for transcription factors and sharp histone marks.
+- **MACS2 broad** (`broad` in the `macs2` column of `samples.csv`, or `broad: True`): for broad histone marks (e.g. H3K27me3).
+
+Narrow and broad samples can be combined in one experiment: their results are written to `results/macs2_narrow/` and `results/macs2_broad/`, respectively.
 - **HTSeq-count + DESeq2** (`use_htseq_count: True`): gene-level read counting followed by differential analysis with DESeq2. Use this when treating CUT&RUN data as a counting experiment rather than peak-based analysis.
 
 ---
@@ -207,7 +213,7 @@ Set `spike_in.apply_spike_in: True` and provide the spike-in genome identifier a
 | `results/mapped/`                                 | Blacklist-filtered, sorted BAM files                              |
 | `results/bigwig/`                                 | Normalised BigWig files for genome browser                        |
 | `results/deeptools/`                              | computeMatrix output                                              |
-| `results/macs2_narrow/` or `results/macs2_broad/` | MACS2 peak files per sample and consensus peaks                   |
+| `results/macs2_narrow/` and/or `results/macs2_broad/` | MACS2 peak files per sample and consensus peaks, per FDR cutoff (`fdr<cutoff>/`) |
 | `results/plots/`                                  | QC plots (PCA, scree, fragment lengths, heatmap, peak annotation) |
 | `results/htseq_count/`                            | HTSeq-count tables and DESeq2 results (if enabled)                |
 | `logs/snakemake/`                                 | Timestamped Snakemake log files                                   |
