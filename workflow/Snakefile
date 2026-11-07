@@ -40,7 +40,11 @@ CONDITIONS_NO_CONTROL = conditions(include_controls=False)
 SAMPLE_CONDITIONS = sample_conditions()  # genotype_treatment_factor of each IP sample
 CONSENSUS_CONDITIONS = sorted(set(SAMPLE_CONDITIONS.values()))
 PEAK_MODE = peak_mode()
-fdr = peak_fdr(PEAK_MODE)
+FDRS = peak_fdrs(PEAK_MODE)
+
+
+wildcard_constraints:
+    fdr="|".join(re.escape(f) for f in FDRS),
 
 
 # import rules

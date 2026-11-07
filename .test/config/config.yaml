@@ -51,8 +51,8 @@ peak_calling:
   macs2: # use MACS2 for peak calling and DiffBind for differential analysis
     use_macs2: True
     broad: False
-    qvalue: 0.05
-    broad_cutoff: 0.1
+    qvalue: [0.01, 0.05] # FDR cutoff(s) for narrow peaks; a list runs MACS2 once per cutoff
+    broad_cutoff: [0.1] # cutoff(s) for broad peaks; a list runs MACS2 once per cutoff
     extra: ""
     consensus_peaks:
       max_size: 100 # Maximum size of peaks to be extended

@@ -156,7 +156,8 @@ Key settings to adjust before running:
 | `deeptools.matrix.mode`                    | computeMatrix mode: `scale-regions` or `reference-point`        | `scale-regions`   |
 | `peak_calling.macs2.use_macs2`             | Enable MACS2 peak calling                                       | `True`            |
 | `peak_calling.macs2.broad`                 | Call broad peaks (e.g. for H3K27me3)                            | `False`           |
-| `peak_calling.macs2.qvalue`                | MACS2 q-value cutoff for narrow peaks                           | `0.05`            |
+| `peak_calling.macs2.qvalue`                | MACS2 q-value cutoff(s) for narrow peaks; a list (e.g. `[0.01, 0.05]`) runs peak calling once per cutoff | `[0.05]` |
+| `peak_calling.macs2.broad_cutoff`          | MACS2 broad cutoff(s) for broad peaks; a list runs peak calling once per cutoff (`qvalue` must then be a single value) | `[0.1]` |
 | `peak_calling.htseq_count.use_htseq_count` | Enable HTSeq-count + DESeq2 instead of MACS2                    | `False`           |
 | `resources.*`                              | CPUs and walltime (minutes) per rule                            | see `config.yaml` |
 

@@ -201,13 +201,29 @@ properties:
           broad:
             type: boolean
           qvalue:
-            type: number
-            minimum: 0
-            maximum: 1
+            # A single cutoff or a list of cutoffs (one MACS2 run per cutoff)
+            oneOf:
+              - type: number
+                exclusiveMinimum: 0
+                maximum: 1
+              - type: array
+                minItems: 1
+                items:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1
           broad_cutoff:
-            type: number
-            minimum: 0
-            maximum: 1
+            # A single cutoff or a list of cutoffs (one MACS2 run per cutoff)
+            oneOf:
+              - type: number
+                exclusiveMinimum: 0
+                maximum: 1
+              - type: array
+                minItems: 1
+                items:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1
           extra:
             type: string
           consensus_peaks:
