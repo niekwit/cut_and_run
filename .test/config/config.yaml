@@ -49,7 +49,7 @@ deeptools:
     extra: "" 
 peak_calling:
   macs2: # use MACS2 for peak calling and DiffBind for differential analysis
-    use_macs2: False
+    use_macs2: True
     broad: False
     qvalue: 0.05
     broad_cutoff: 0.1
