@@ -13,12 +13,18 @@ library(scales)
 
 #### PCA plot ####
 # Load PCA data
-data <- read.delim(snakemake@input[[1]], header = TRUE, skip = 1)
-colnames(data) <- str_replace(colnames(data), "^X", "")
+# check.names = FALSE keeps sample names as they are (no X prepended to names
+# starting with a number), so they match samples.csv exactly
+data <- read.delim(
+  snakemake@input[["pca"]],
+  header = TRUE,
+  skip = 1,
+  check.names = FALSE
+)
 
 # Load sample information
 sample_info <- read.csv(
-  "config/samples.csv",
+  snakemake@input[["samples"]],
   header = TRUE,
   colClasses = "character"
 )
@@ -40,9 +46,6 @@ if ("control" %in% colnames(sample_info)) {
 # Unique sample conditions
 samples <- colnames(data)[2:(ncol(data) - 1)]
 samples <- unique(str_replace(samples, "_[0-9]+$", ""))
-
-# Remove prepended X from sample names (happens if they start with a number)
-samples <- str_replace(samples, "^X", "")
 
 # Set colours for plotting
 if (length(samples) == 1) {
