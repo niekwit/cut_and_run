@@ -34,7 +34,8 @@ rule plot_fragment_lengths:
 
 rule plot_PCA:
     input:
-        "results/deeptools/PCA.tab",
+        pca="results/deeptools/PCA.tab",
+        samples="config/samples.csv",
     output:
         pca="results/plots/qc/PCA.pdf",
         scree="results/plots/qc/scree.pdf",

@@ -13,18 +13,39 @@ library(scales)
 
 #### PCA plot ####
 # Load PCA data
-data <- read.delim(snakemake@input[[1]], header = TRUE, skip = 1)
-colnames(data) <- str_replace(colnames(data), "^X", "")
+# check.names = FALSE keeps sample names as they are (no X prepended to names
+# starting with a number), so they match samples.csv exactly
+data <- read.delim(
+  snakemake@input[["pca"]],
+  header = TRUE,
+  skip = 1,
+  check.names = FALSE
+)
 
 # Load sample information
-sample_info <- read.csv("config/samples.csv", header = TRUE)
+sample_info <- read.csv(
+  snakemake@input[["samples"]],
+  header = TRUE,
+  colClasses = "character"
+)
+
+# Factor of each sample: IP samples get their own factor, control samples
+# (only present in the control column) are shown in the facet of every
+# factor they are a control for
+factors <- sample_info %>%
+  dplyr::select(sample, factor)
+if ("control" %in% colnames(sample_info)) {
+  controls <- sample_info %>%
+    dplyr::filter(control != "") %>%
+    dplyr::select(sample = control, factor) %>%
+    dplyr::filter(!sample %in% factors$sample) %>%
+    distinct()
+  factors <- bind_rows(factors, controls)
+}
 
 # Unique sample conditions
 samples <- colnames(data)[2:(ncol(data) - 1)]
 samples <- unique(str_replace(samples, "_[0-9]+$", ""))
-
-# Remove prepended X from sample names (happens if they start with a number)
-samples <- str_replace(samples, "^X", "")
 
 # Set colours for plotting
 if (length(samples) == 1) {
@@ -35,6 +56,8 @@ if (length(samples) == 1) {
   colours <- brewer.pal(length(samples), "Dark2")
 } else if (length(samples) < 13) {
   colours <- brewer.pal(length(samples), "Set3")
+} else {
+  colours <- hue_pal()(length(samples))
 }
 names(colours) <- samples
 
@@ -45,25 +68,26 @@ df <- data[1:2, ] %>%
   as.data.frame() %>%
   mutate(sample = rownames(.)) %>%
   rename(PC1 = 1, PC2 = 2) %>%
-  mutate(
-    sample_condition = str_replace(sample, "_[0-9]+$", ""),
-    colour = colours[sample_condition]
-  )
+  mutate(sample_condition = str_replace(sample, "_[0-9]+$", "")) %>%
+  left_join(factors, by = "sample", relationship = "many-to-many") %>%
+  mutate(factor = replace_na(factor, "Other"))
 
 # Calculate variance explained for each PC
 PC1_var <- round((data$Eigenvalue[1] / sum(data$Eigenvalue)) * 100, 1)
 PC2_var <- round((data$Eigenvalue[2] / sum(data$Eigenvalue)) * 100, 1)
 
-# Create PCA plot
-p <- ggplot(df, mapping = aes(x = PC1, y = PC2, colour = colour)) +
+# Create PCA plot with one facet per factor (PCA is calculated on all samples,
+# so all facets share the same axes)
+p <- ggplot(df, mapping = aes(x = PC1, y = PC2, colour = sample_condition)) +
   geom_point(shape = 19, size = 5) +
   geom_label_repel(
-    data = df,
-    aes(label = sample, fill = NULL),
+    aes(label = sample),
     size = 3.5,
     nudge_x = 0.5,
     nudge_y = 0.5
   ) +
+  scale_colour_manual(values = colours) +
+  facet_wrap(~factor, ncol = min(3, n_distinct(df$factor))) +
   theme_cowplot(16) +
   labs(
     x = paste0("PC1: ", PC1_var, "% variance"),
@@ -71,8 +95,19 @@ p <- ggplot(df, mapping = aes(x = PC1, y = PC2, colour = colour)) +
   ) +
   theme(legend.position = "none")
 
+# Scale plot size with the number of facets
+n_facets <- n_distinct(df$factor)
+n_cols <- min(3, n_facets)
+n_rows <- ceiling(n_facets / n_cols)
+
 # Save plot
-ggsave(snakemake@output[["pca"]], p, height = 4, width = 6)
+ggsave(
+  snakemake@output[["pca"]],
+  p,
+  height = 4 * n_rows,
+  width = 6 * n_cols,
+  limitsize = FALSE
+)
 
 #### Scree plot ####
 # Scale factor for utilising whole second y-axis range
