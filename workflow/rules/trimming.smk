@@ -16,8 +16,10 @@ if PAIRED_END:
             threads: config["resources"]["trim"]["cpu"]
             resources:
                 runtime=config["resources"]["trim"]["time"],
+            conda:
+                "../envs/trim_galore.yml"
             wrapper:
-                "v7.0.0/bio/trim_galore/pe"
+                "v9.9.0/bio/trim_galore/pe"
 
     else:
 
@@ -55,8 +57,10 @@ else:
             threads: config["resources"]["trim"]["cpu"]
             resources:
                 runtime=config["resources"]["trim"]["time"],
+            conda:
+                "../envs/trim_galore.yml"
             wrapper:
-                "v7.0.0/bio/trim_galore/se"
+                "v9.9.0/bio/trim_galore/se"
 
     else:
 

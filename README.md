@@ -19,7 +19,7 @@ FastQC + MultiQC (QC)
     ├── [optional] Per-sample downsampling (seqtk)
     │
     ▼
-Adapter trimming (Cutadapt or Trim Galore)
+Adapter trimming (Cutadapt or Trim Galore 2)
     │
     ▼
 Reference genome download + Bowtie2 index
@@ -149,7 +149,7 @@ Key settings to adjust before running:
 | `spike_in.apply_spike_in`                  | Enable spike-in normalisation                                   | `False`           |
 | `spike_in.genome`                          | Spike-in genome (e.g. `MG1655` for _E. coli_)                   | `MG1655`          |
 | `spike_in.normalisation`                   | Spike-in normalisation method: `divide` or `multiply`           | `divide`          |
-| `use_trim_galore`                          | Use Trim Galore instead of Cutadapt                             | `False`           |
+| `use_trim_galore`                          | Use Trim Galore 2 (Rust) instead of Cutadapt                    | `False`           |
 | `downsample_seed`                          | Random seed for downsampling (see `config/downsample.csv`)      | `42`              |
 | `remove_MT_seqs`                           | Exclude mitochondrial sequences from the genome index           | `True`            |
 | `bowtie2.min_length`                       | Minimum fragment length for paired-end alignments               | `10`              |
