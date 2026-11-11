@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="eec7716a835ff0db299ad2e78f402043e5ca476d90e291ad95fbf5d0b774922b"
+LABEL io.github.snakemake.conda_env_hash="39a510ae3eae7658986d8f0a2f384fe10f50c50bb418a4043247905ab5859137"
 
 # Step 2: Retrieve conda environments
 
@@ -108,7 +108,7 @@ COPY workflow/envs/R.yaml /conda-envs/c62fabd74158877ceb04451c2e72ec98/environme
 
 # Conda environment:
 #   source: workflow/envs/deeptools.yaml
-#   prefix: /conda-envs/de580fd3264c6a07cb848f860e81b43b
+#   prefix: /conda-envs/6bab4889727c9a54b84b4a193a411453
 #   name: deeptools
 #   channels: 
 #     - conda-forge
@@ -121,8 +121,9 @@ COPY workflow/envs/R.yaml /conda-envs/c62fabd74158877ceb04451c2e72ec98/environme
 #     - pysam=0.22.0
 #     - wiggletools=1.2.11
 #     - ucsc-wigtobigwig=447
-RUN mkdir -p /conda-envs/de580fd3264c6a07cb848f860e81b43b
-COPY workflow/envs/deeptools.yaml /conda-envs/de580fd3264c6a07cb848f860e81b43b/environment.yaml
+#     - pybedtools=0.10.0
+RUN mkdir -p /conda-envs/6bab4889727c9a54b84b4a193a411453
+COPY workflow/envs/deeptools.yaml /conda-envs/6bab4889727c9a54b84b4a193a411453/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/diffbind.yaml
@@ -164,19 +165,33 @@ COPY workflow/envs/mapping.yaml /conda-envs/2835662405b3a6fa87f9b0640552f9b7/env
 
 # Conda environment:
 #   source: workflow/envs/peaks.yaml
-#   prefix: /conda-envs/c729bb841c18d0c5ea33959e9323e8cb
+#   prefix: /conda-envs/29a42af52cf5ad3813c83dad0ee6823e
 #   name: peaks
-#   channels: 
+#   channels:
 #     - conda-forge
 #     - bioconda
 #     - defaults
 #   dependencies:
 #     - python=3.10
-#     - macs2=2.2.9.1
+#     - macs2=2.2.7.1
 #     - htseq=2.0.4
 #     - pandas=2.0.3
-RUN mkdir -p /conda-envs/c729bb841c18d0c5ea33959e9323e8cb
-COPY workflow/envs/peaks.yaml /conda-envs/c729bb841c18d0c5ea33959e9323e8cb/environment.yaml
+RUN mkdir -p /conda-envs/29a42af52cf5ad3813c83dad0ee6823e
+COPY workflow/envs/peaks.yaml /conda-envs/29a42af52cf5ad3813c83dad0ee6823e/environment.yaml
+
+# Conda environment:
+#   source: workflow/envs/seqtk.yaml
+#   prefix: /conda-envs/7e1fcde41edf6003683de16db2e301a2
+#   name: seqtk
+#   channels:
+#     - conda-forge
+#     - bioconda
+#     - defaults
+#   dependencies:
+#     - seqtk=1.4
+#     - pigz=2.8
+RUN mkdir -p /conda-envs/7e1fcde41edf6003683de16db2e301a2
+COPY workflow/envs/seqtk.yaml /conda-envs/7e1fcde41edf6003683de16db2e301a2/environment.yaml
 
 # Step 3: Generate conda environments
 
@@ -187,8 +202,9 @@ RUN conda env create --prefix /conda-envs/f64f273a2db056abfb1bb96490c40bbe --fil
     conda env create --prefix /conda-envs/84188cb48cfebe3cadc377f2f5001295 --file /conda-envs/84188cb48cfebe3cadc377f2f5001295/environment.yaml && \
     conda env create --prefix /conda-envs/93bab9ed6097f300f8667bc95cf9fd61 --file /conda-envs/93bab9ed6097f300f8667bc95cf9fd61/environment.yaml && \
     conda env create --prefix /conda-envs/c62fabd74158877ceb04451c2e72ec98 --file /conda-envs/c62fabd74158877ceb04451c2e72ec98/environment.yaml && \
-    conda env create --prefix /conda-envs/de580fd3264c6a07cb848f860e81b43b --file /conda-envs/de580fd3264c6a07cb848f860e81b43b/environment.yaml && \
+    conda env create --prefix /conda-envs/6bab4889727c9a54b84b4a193a411453 --file /conda-envs/6bab4889727c9a54b84b4a193a411453/environment.yaml && \
     conda env create --prefix /conda-envs/fcc3fce9754fdad4cad3ccd18fc615fe --file /conda-envs/fcc3fce9754fdad4cad3ccd18fc615fe/environment.yaml && \
     conda env create --prefix /conda-envs/2835662405b3a6fa87f9b0640552f9b7 --file /conda-envs/2835662405b3a6fa87f9b0640552f9b7/environment.yaml && \
-    conda env create --prefix /conda-envs/c729bb841c18d0c5ea33959e9323e8cb --file /conda-envs/c729bb841c18d0c5ea33959e9323e8cb/environment.yaml && \
+    conda env create --prefix /conda-envs/29a42af52cf5ad3813c83dad0ee6823e --file /conda-envs/29a42af52cf5ad3813c83dad0ee6823e/environment.yaml && \
+    conda env create --prefix /conda-envs/7e1fcde41edf6003683de16db2e301a2 --file /conda-envs/7e1fcde41edf6003683de16db2e301a2/environment.yaml && \
     conda clean --all -y
