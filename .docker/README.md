@@ -8,7 +8,8 @@ These images are shared via [Docker Hub](https://hub.docker.com/repository/docke
 
 ```shell
 snakemake --containerize > Dockerfile
-docker build -t niekwit/cut_and_run:v0.6.0 .
+docker build -t niekwit/cut_and_run:v0.7.0 .
 docker login
-docker push niekwit/cut_and_run:v0.6.0
+docker push niekwit/cut_and_run:v0.7.0
+
 ```

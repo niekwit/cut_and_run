@@ -1,11 +1,15 @@
 include: "scripts/general_functions.smk"
 
 
-# Set minimum snakemake version
+# Set minimum Snakemake version
 min_version("8.25.0")
 
-# Wrapper version
-wrapper_version = "v7.0.0"
+VERSION = "v0.7.0"
+logger.info(f"Running workflow version {VERSION}")
+
+
+# Set container image
+containerized: f"docker://niekwit/cut_and_run:{VERSION}"
 
 
 # Load config file and genome
