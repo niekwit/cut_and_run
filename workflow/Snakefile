@@ -7,8 +7,10 @@ min_version("8.25.0")
 VERSION = "v0.7.0"
 logger.info(f"Running workflow version {VERSION}")
 
+
 # Set container image
 containerized: f"docker://niekwit/cut_and_run:{VERSION}"
+
 
 # Load config file and genome
 configfile: "config/config.yaml"
